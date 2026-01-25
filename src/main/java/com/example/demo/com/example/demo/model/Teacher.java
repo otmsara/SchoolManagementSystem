@@ -2,6 +2,7 @@ package com.example.demo.com.example.demo.model;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.List;
 
 import jakarta.persistence.*;
 
@@ -21,6 +22,14 @@ public class Teacher {
     private String degree;
     @Transient
     private Integer age;
+
+
+    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL)
+    private List<Course> courses;
+
+    public List<Course> getCourses() { return courses; }
+    public void setCourses(List<Course> courses) { this.courses = courses; }
+
 
     public Teacher() {
     }
@@ -122,10 +131,3 @@ public class Teacher {
 
 }
 
-/*
- * Switch up this Idea to have a dropdown of all the major courses in UW.
- * Make a HTTP path for registration,
- * then put all of the major courses into a sort of list DB
- * GOOD LUCK DAWGGGG!
- * 
- */

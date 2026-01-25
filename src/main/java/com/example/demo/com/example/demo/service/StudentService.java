@@ -2,7 +2,11 @@ package com.example.demo.com.example.demo.service;
 
 import java.util.*;
 
+import com.example.demo.com.example.demo.model.Course;
+import com.example.demo.com.example.demo.model.Enrollment;
 import com.example.demo.com.example.demo.model.Student;
+import com.example.demo.com.example.demo.repository.CourseRepository;
+import com.example.demo.com.example.demo.repository.EnrollmentRepository;
 import com.example.demo.com.example.demo.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +18,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class StudentService {
 
 	private final StudentRepository studentRepository;
-
+	@Autowired
+	private StudentRepository studentRepo;
+	@Autowired
+	private CourseRepository courseRepo;
+	@Autowired
+	private EnrollmentRepository enrollmentRepo;
 	@Autowired
 	public StudentService(StudentRepository studentRepository) {
 		this.studentRepository = studentRepository;
@@ -64,4 +73,17 @@ public class StudentService {
 		return studentRepository.findById(studentId)
 				.orElseThrow(() -> new IllegalStateException("student with id " + studentId + "does not exist"));
 	}
+
+	public void enrollStudent(Long studentId, Long courseId) {
+		Student s = studentRepo.findById(studentId).orElseThrow();
+		Course c = courseRepo.findById(courseId).orElseThrow();
+
+		Enrollment e = new Enrollment();
+		e.setStudent(s);
+		e.setCourse(c);
+		e.setAcademicYear("2025/2026");
+
+		enrollmentRepo.save(e);
+	}
+
 }

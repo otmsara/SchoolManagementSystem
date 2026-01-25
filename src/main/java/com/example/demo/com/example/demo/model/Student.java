@@ -2,6 +2,7 @@ package com.example.demo.com.example.demo.model;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.List;
 
 import jakarta.persistence.*;
 
@@ -21,6 +22,12 @@ public class Student {
     private Integer Years;
     @Transient
     private Integer age;
+
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    private List<Enrollment> enrollments;
+
+    public List<Enrollment> getEnrollments() { return enrollments; }
+    public void setEnrollments(List<Enrollment> enrollments) { this.enrollments = enrollments; }
 
     public Student() {
     }
@@ -50,6 +57,7 @@ public class Student {
         this.Major = Major;
         this.Years = Years;
     }
+
 
     public Long getId() {
         return this.id;
@@ -121,10 +129,3 @@ public class Student {
     }
 }
 
-/*
- * Switch up this Idea to have a dropdown of all the major courses in UW.
- * Make a HTTP path for registration,
- * then put all of the major courses into a sort of list DS
- * GOOD LUCK DAWGGGG!
- * 
- */

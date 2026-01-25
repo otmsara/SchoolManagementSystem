@@ -2,7 +2,9 @@ package com.example.demo.com.example.demo.service;
 
 import java.util.*;
 
+import com.example.demo.com.example.demo.model.Course;
 import com.example.demo.com.example.demo.model.Teacher;
+import com.example.demo.com.example.demo.repository.CourseRepository;
 import com.example.demo.com.example.demo.repository.TeacherRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,10 @@ public class TeacherService {
 		this.teacherRepository = teacherRepository;
 	}
 
+	@Autowired
+	private TeacherRepository teacherRepo;
+	@Autowired
+	private CourseRepository courseRepo;
 	@GetMapping
 	public List<Teacher> getTeachers() {
 		return teacherRepository.findAll();
@@ -57,4 +63,12 @@ public class TeacherService {
 		teacher.setFaculty(faculty);
 		teacher.setDegree(degree);
 	}
+
+	public Course assignTeacher(Long courseId, Long teacherId) {
+		Course c = courseRepo.findById(courseId).orElseThrow();
+		Teacher t = teacherRepo.findById(teacherId).orElseThrow();
+		c.setTeacher(t);
+		return courseRepo.save(c);
+	}
+
 }

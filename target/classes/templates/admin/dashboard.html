@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Dashboard Admin - School Management</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-speedometer2"></i> Dashboard Administrateur</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise"></i> Actualiser
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistiques globales -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Étudiants</h6>
+                            <h2 class="mb-0" id="studentsCount">0</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-people-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <a href="/admin/students" class="text-white text-decoration-none">
+                        <small>Voir tous <i class="bi bi-arrow-right"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Enseignants</h6>
+                            <h2 class="mb-0" id="teachersCount">0</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-person-badge-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <a href="/admin/teachers" class="text-white text-decoration-none">
+                        <small>Voir tous <i class="bi bi-arrow-right"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Cours</h6>
+                            <h2 class="mb-0" id="coursesCount">0</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-book-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <a href="/admin/courses" class="text-white text-decoration-none">
+                        <small>Voir tous <i class="bi bi-arrow-right"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Inscriptions</h6>
+                            <h2 class="mb-0" id="enrollmentsCount">0</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-clipboard-check-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <a href="/admin/enrollments" class="text-white text-decoration-none">
+                        <small>Voir toutes <i class="bi bi-arrow-right"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning-fill"></i> Actions Rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="/admin/students" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-person-plus"></i> Ajouter un étudiant
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="/admin/teachers" class="btn btn-outline-success w-100">
+                                <i class="bi bi-person-badge"></i> Ajouter un enseignant
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="/admin/courses" class="btn btn-outline-warning w-100">
+                                <i class="bi bi-book"></i> Créer un cours
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="/admin/enrollments" class="btn btn-outline-info w-100">
+                                <i class="bi bi-clipboard-check"></i> Voir inscriptions
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activités récentes (placeholder) -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Inscriptions Récentes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush" id="recentEnrollments">
+                        <p class="text-muted text-center py-3">Chargement...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Statistiques</h5>
+                </div>
+                <div class="card-body">
+                    <div id="statsChart">
+                        <p class="text-muted text-center">Graphique des statistiques</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Charger les statistiques au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/dashboard')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('studentsCount').textContent = data.students;
+                    document.getElementById('teachersCount').textContent = data.teachers;
+                    document.getElementById('coursesCount').textContent = data.courses;
+                    document.getElementById('enrollmentsCount').textContent = data.enrollments;
+                })
+                .catch(error => console.error('Erreur:', error));
+        });
+    </script>
+</div>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Dashboard Enseignant</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-person-badge"></i> Dashboard Enseignant</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+                <span class="badge bg-success fs-6">
+                    <i class="bi bi-calendar-check"></i> Année 2025/2026
+                </span>
+        </div>
+    </div>
+
+    <!-- Informations personnelles -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-circle"></i> Mes Informations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center mb-3">
+                                <i class="bi bi-person-circle" style="font-size: 5rem; color: #198754;"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <strong><i class="bi bi-person"></i> Nom:</strong>
+                                    <p class="mb-1" id="teacherName">Chargement...</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong><i class="bi bi-envelope"></i> Email:</strong>
+                                    <p class="mb-1" id="teacherEmail">Chargement...</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong><i class="bi bi-building"></i> Faculté:</strong>
+                                    <p class="mb-1" id="teacherFaculty">Chargement...</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong><i class="bi bi-mortarboard"></i> Diplôme:</strong>
+                                    <p class="mb-1" id="teacherDegree">Chargement...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Mes Cours</h6>
+                            <h2 class="mb-0" id="myCoursesCount">0</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-book-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <a href="/teacher/my-courses" class="text-white text-decoration-none">
+                        <small>Voir mes cours <i class="bi bi-arrow-right"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Mes Étudiants</h6>
+                            <h2 class="mb-0" id="myStudentsCount">0</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-people-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <a href="/teacher/students" class="text-white text-decoration-none">
+                        <small>Voir la liste <i class="bi bi-arrow-right"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Inscriptions</h6>
+                            <h2 class="mb-0" id="totalEnrollments">0</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-clipboard-check-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <small>Total cette année</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mes cours récents -->
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-book"></i> Mes Cours Actifs</h5>
+                </div>
+                <div class="card-body">
+                    <div id="myCoursesList" class="row">
+                        <div class="col-12 text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning-fill"></i> Actions Rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="/teacher/my-courses" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-book"></i> Voir mes cours
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="/teacher/students" class="btn btn-outline-info w-100">
+                                <i class="bi bi-people"></i> Mes étudiants
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="/profile" class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-person"></i> Mon profil
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="/settings" class="btn btn-outline-dark w-100">
+                                <i class="bi bi-gear"></i> Paramètres
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ID de l'enseignant connecté (à obtenir depuis le backend/session)
+        const currentTeacherId = 1; // TODO: Remplacer par l'ID réel de l'enseignant connecté
+
+        // Charger les informations de l'enseignant
+        function loadTeacherInfo() {
+            fetch(`/api/v1/teacher`)
+                .then(response => response.json())
+                .then(teachers => {
+                    // Trouver l'enseignant connecté (pour la démo, on prend le premier)
+                    const teacher = teachers.find(t => t.id === currentTeacherId) || teachers[0];
+
+                    if (teacher) {
+                        document.getElementById('teacherName').textContent = teacher.name;
+                        document.getElementById('teacherEmail').textContent = teacher.email;
+                        document.getElementById('teacherFaculty').textContent = teacher.faculty;
+                        document.getElementById('teacherDegree').textContent = teacher.degree;
+                    }
+                })
+                .catch(error => console.error('Erreur:', error));
+        }
+
+        // Charger les cours de l'enseignant
+        function loadMyCourses() {
+            fetch('/api/courses')
+                .then(response => response.json())
+                .then(allCourses => {
+                    // Filtrer les cours de cet enseignant
+                    const myCourses = allCourses.filter(c => c.teacher?.id === currentTeacherId);
+
+                    document.getElementById('myCoursesCount').textContent = myCourses.length;
+
+                    if (myCourses.length === 0) {
+                        document.getElementById('myCoursesList').innerHTML =
+                            '<div class="col-12"><p class="text-muted text-center">Aucun cours assigné</p></div>';
+                        return;
+                    }
+
+                    // Afficher les cours
+                    document.getElementById('myCoursesList').innerHTML = myCourses.map(course => `
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="bi bi-book"></i> ${course.name}
+                                    </h5>
+                                    <p class="card-text">
+                                        <span class="badge bg-secondary">${course.code || 'N/A'}</span>
+                                        <span class="badge bg-info">${course.credits || 3} crédits</span>
+                                    </p>
+                                    <p class="card-text small text-muted">
+                                        ${course.description || 'Pas de description'}
+                                    </p>
+                                    <a href="/teacher/my-courses" class="btn btn-sm btn-primary">
+                                        Voir détails <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    // Charger les inscriptions pour ces cours
+                    loadEnrollmentsForCourses(myCourses.map(c => c.id));
+                })
+                .catch(error => console.error('Erreur:', error));
+        }
+
+        // Charger les inscriptions
+        function loadEnrollmentsForCourses(courseIds) {
+            fetch('/api/courses/enrollments')
+                .then(response => response.json())
+                .then(enrollments => {
+                    const myEnrollments = enrollments.filter(e =>
+                        courseIds.includes(e.course?.id)
+                    );
+
+                    document.getElementById('totalEnrollments').textContent = myEnrollments.length;
+
+                    // Compter le nombre d'étudiants uniques
+                    const uniqueStudents = [...new Set(myEnrollments.map(e => e.student?.id))];
+                    document.getElementById('myStudentsCount').textContent = uniqueStudents.length;
+                })
+                .catch(error => console.error('Erreur:', error));
+        }
+
+        // Charger toutes les données au démarrage
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTeacherInfo();
+            loadMyCourses();
+        });
+    </script>
+</div>
+</body>
+</html>

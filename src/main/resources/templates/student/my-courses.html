@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Mes Cours - Étudiant</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-book-half"></i> Mes Cours</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="/student/enroll" class="btn btn-primary me-2">
+                <i class="bi bi-plus-circle"></i> S'inscrire à un cours
+            </a>
+            <button class="btn btn-outline-secondary" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise"></i> Actualiser
+            </button>
+        </div>
+    </div>
+
+    <!-- Résumé -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h6 class="text-uppercase">Cours inscrits</h6>
+                    <h2 id="totalEnrolled">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h6 class="text-uppercase">Crédits totaux</h6>
+                    <h2 id="totalCredits">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h6 class="text-uppercase">Semestre 1</h6>
+                    <h2 id="semester1Count">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h6 class="text-uppercase">Semestre 2</h6>
+                    <h2 id="semester2Count">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <input type="text" class="form-control" id="searchCourse"
+                   placeholder="Rechercher un cours...">
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" id="filterSemester">
+                <option value="">Tous les semestres</option>
+                <option value="1">Semestre 1</option>
+                <option value="2">Semestre 2</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Liste des cours -->
+    <div class="row" id="coursesContainer">
+        <div class="col-12 text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Détails du cours -->
+    <div class="modal fade" id="courseDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="courseDetailsTitle">Détails du cours</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="courseDetailsBody">
+                    <!-- Contenu chargé dynamiquement -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const currentStudentId = 1; // TODO: ID réel de l'étudiant connecté
+        let myEnrollments = [];
+        let allCourses = [];
+
+        // Charger les cours
+        function loadMyCourses() {
+            Promise.all([
+                fetch('/api/courses/enrollments').then(r => r.json()),
+                fetch('/api/courses').then(r => r.json())
+            ])
+            .then(([enrollments, courses]) => {
+                allCourses = courses;
+                myEnrollments = enrollments.filter(e => e.student?.id === currentStudentId);
+                displayCourses(myEnrollments);
+                updateStats();
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                document.getElementById('coursesContainer').innerHTML =
+                    '<div class="col-12"><div class="alert alert-danger">Erreur de chargement</div></div>';
+            });
+        }
+
+        // Afficher les cours
+        function displayCourses(enrollments) {
+            const container = document.getElementById('coursesContainer');
+
+            if (enrollments.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center py-5">
+                                <i class="bi bi-book" style="font-size: 4rem; color: #6c757d;"></i>
+                                <h4 class="mt-3">Aucun cours inscrit</h4>
+                                <p class="text-muted">Vous n'êtes inscrit à aucun cours pour le moment.</p>
+                                <a href="/student/enroll" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle"></i> S'inscrire à un cours
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = enrollments.map(enrollment => {
+                const course = enrollment.course;
+                if (!course) return '';
+
+                return `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-book-fill"></i> ${course.name}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <span class="badge bg-secondary">${course.code || 'N/A'}</span>
+                                    <span class="badge bg-success">${course.credits || 3} crédits</span>
+                                    <span class="badge bg-info">S${course.semester || 1}</span>
+                                </div>
+
+                                <p class="card-text small text-muted mb-3">
+                                    ${course.description || 'Pas de description disponible'}
+                                </p>
+
+                                ${course.teacher ? `
+                                    <div class="mb-3">
+                                        <small class="text-muted">Enseignant:</small><br>
+                                        <i class="bi bi-person-badge text-success"></i>
+                                        <strong>${course.teacher.name}</strong><br>
+                                        <small class="text-muted">${course.teacher.faculty}</small>
+                                    </div>
+                                ` : '<p class="text-muted small">Enseignant non assigné</p>'}
+
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar-check"></i>
+                                        Inscrit le ${enrollment.enrollmentDate || new Date().toLocaleDateString('fr-FR')}
+                                    </small>
+                                </div>
+
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-mortarboard"></i>
+                                        Année: ${enrollment.academicYear || '2025/2026'}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="showCourseDetails(${course.id})">
+                                        <i class="bi bi-eye"></i> Voir détails
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Afficher les détails d'un cours
+        function showCourseDetails(courseId) {
+            const enrollment = myEnrollments.find(e => e.course?.id === courseId);
+            if (!enrollment) return;
+
+            const course = enrollment.course;
+
+            document.getElementById('courseDetailsTitle').textContent = course.name;
+            document.getElementById('courseDetailsBody').innerHTML = `
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-info-circle"></i> Informations générales</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Code:</strong></td><td>${course.code || 'N/A'}</td></tr>
+                            <tr><td><strong>Crédits:</strong></td><td>${course.credits || 3}</td></tr>
+                            <tr><td><strong>Semestre:</strong></td><td>${course.semester || 1}</td></tr>
+                            <tr><td><strong>Capacité:</strong></td><td>${course.capacity || 30} étudiants</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-person-badge"></i> Enseignant</h6>
+                        ${course.teacher ? `
+                            <table class="table table-sm">
+                                <tr><td><strong>Nom:</strong></td><td>${course.teacher.name}</td></tr>
+                                <tr><td><strong>Email:</strong></td><td>${course.teacher.email}</td></tr>
+                                <tr><td><strong>Faculté:</strong></td><td>${course.teacher.faculty}</td></tr>
+                                <tr><td><strong>Diplôme:</strong></td><td>${course.teacher.degree}</td></tr>
+                            </table>
+                        ` : '<p class="text-muted">Enseignant non assigné</p>'}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <h6><i class="bi bi-card-text"></i> Description</h6>
+                    <p>${course.description || 'Aucune description disponible'}</p>
+                </div>
+
+                <div>
+                    <h6><i class="bi bi-clipboard-check"></i> Mon inscription</h6>
+                    <table class="table table-sm">
+                        <tr><td><strong>Date d'inscription:</strong></td><td>${enrollment.enrollmentDate || new Date().toLocaleDateString('fr-FR')}</td></tr>
+                        <tr><td><strong>Année académique:</strong></td><td>${enrollment.academicYear || '2025/2026'}</td></tr>
+                    </table>
+                </div>
+            `;
+
+            new bootstrap.Modal(document.getElementById('courseDetailsModal')).show();
+        }
+
+        // Mettre à jour les statistiques
+        function updateStats() {
+            document.getElementById('totalEnrolled').textContent = myEnrollments.length;
+
+            const credits = myEnrollments.reduce((sum, e) => sum + (e.course?.credits || 3), 0);
+            document.getElementById('totalCredits').textContent = credits;
+
+            const semester1 = myEnrollments.filter(e => e.course?.semester === 1).length;
+            const semester2 = myEnrollments.filter(e => e.course?.semester === 2).length;
+            document.getElementById('semester1Count').textContent = semester1;
+            document.getElementById('semester2Count').textContent = semester2;
+        }
+
+        // Recherche
+        document.getElementById('searchCourse').addEventListener('input', function(e) {
+            const search = e.target.value.toLowerCase();
+            const filtered = myEnrollments.filter(enr =>
+                enr.course?.name.toLowerCase().includes(search) ||
+                (enr.course?.code && enr.course.code.toLowerCase().includes(search))
+            );
+            displayCourses(filtered);
+        });
+
+        // Filtre par semestre
+        document.getElementById('filterSemester').addEventListener('change', function(e) {
+            const semester = parseInt(e.target.value);
+            const filtered = semester ?
+                myEnrollments.filter(enr => enr.course?.semester === semester) :
+                myEnrollments;
+            displayCourses(filtered);
+        });
+
+        // Charger au démarrage
+        document.addEventListener('DOMContentLoaded', loadMyCourses);
+    </script>
+</div>
+</body>
+</html>

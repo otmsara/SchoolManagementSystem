@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Mes Étudiants - Enseignant</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-people"></i> Mes Étudiants</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button class="btn btn-outline-primary" onclick="exportToExcel()">
+                <i class="bi bi-file-earmark-excel"></i> Exporter
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="text-uppercase">Total étudiants</h6>
+                    <h3 id="totalStudents">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="text-uppercase">Cours enseignés</h6>
+                    <h3 id="totalCourses">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="text-uppercase">Inscriptions actives</h6>
+                    <h3 id="totalEnrollments">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" class="form-control" id="searchStudent"
+                   placeholder="Rechercher par nom ou email...">
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filterCourse">
+                <option value="">Tous mes cours</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filterYear">
+                <option value="">Toutes les années</option>
+                <option value="1">1ère année</option>
+                <option value="2">2ème année</option>
+                <option value="3">3ème année</option>
+                <option value="4">4ème année</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Tableau des étudiants -->
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="list-tab" data-bs-toggle="tab"
+                            data-bs-target="#list-view" type="button" role="tab">
+                        <i class="bi bi-list-ul"></i> Liste
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="cards-tab" data-bs-toggle="tab"
+                            data-bs-target="#cards-view" type="button" role="tab">
+                        <i class="bi bi-grid"></i> Cartes
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content">
+                <!-- Vue Liste -->
+                <div class="tab-pane fade show active" id="list-view" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Étudiant</th>
+                                <th>Email</th>
+                                <th>Année</th>
+                                <th>Filière</th>
+                                <th>Cours suivis</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody id="studentsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Chargement...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Vue Cartes -->
+                <div class="tab-pane fade" id="cards-view" role="tabpanel">
+                    <div class="row" id="studentsCardsContainer">
+                        <div class="col-12 text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Détails Étudiant -->
+    <div class="modal fade" id="studentDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="studentDetailsTitle">Détails de l'étudiant</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="studentDetailsBody">
+                    <!-- Contenu chargé dynamiquement -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const currentTeacherId = 1; // TODO: ID réel de l'enseignant connecté
+        let myStudents = [];
+        let myCourses = [];
+        let enrollments = [];
+
+        // Charger toutes les données
+        function loadData() {
+            Promise.all([
+                fetch('/api/courses').then(r => r.json()),
+                fetch('/api/courses/enrollments').then(r => r.json()),
+                fetch('/api/v1/student').then(r => r.json())
+            ])
+            .then(([courses, enrollmentsData, allStudents]) => {
+                myCourses = courses.filter(c => c.teacher?.id === currentTeacherId);
+                enrollments = enrollmentsData;
+
+                // Filtrer les inscriptions pour mes cours
+                const myEnrollments = enrollments.filter(e =>
+                    myCourses.some(c => c.id === e.course?.id)
+                );
+
+                // Obtenir les étudiants uniques
+                const studentIds = [...new Set(myEnrollments.map(e => e.student?.id))];
+                myStudents = allStudents.filter(s => studentIds.includes(s.id));
+
+                // Ajouter les cours à chaque étudiant
+                myStudents.forEach(student => {
+                    student.enrolledCourses = myEnrollments
+                        .filter(e => e.student?.id === student.id)
+                        .map(e => e.course);
+                });
+
+                displayStudents(myStudents);
+                updateStats();
+                populateCourseFilter();
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                document.getElementById('studentsTableBody').innerHTML =
+                    '<tr><td colspan="6" class="text-center text-danger">Erreur de chargement</td></tr>';
+            });
+        }
+
+        // Afficher les étudiants (vue liste)
+        function displayStudents(students) {
+            const tbody = document.getElementById('studentsTableBody');
+
+            if (students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Aucun étudiant trouvé</td></tr>';
+                displayStudentCards(students);
+                return;
+            }
+
+            tbody.innerHTML = students.map(student => `
+                <tr>
+                    <td>
+                        <i class="bi bi-person-circle text-primary"></i>
+                        <strong>${student.name}</strong>
+                    </td>
+                    <td>${student.email}</td>
+                    <td><span class="badge bg-info">${student.years}ème année</span></td>
+                    <td>${student.major}</td>
+                    <td>
+                        <span class="badge bg-success">${student.enrolledCourses?.length || 0} cours</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showStudentDetails(${student.id})">
+                            <i class="bi bi-eye"></i> Détails
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            displayStudentCards(students);
+        }
+
+        // Afficher les étudiants (vue cartes)
+        function displayStudentCards(students) {
+            const container = document.getElementById('studentsCardsContainer');
+
+            if (students.length === 0) {
+                container.innerHTML = '<div class="col-12"><p class="text-center text-muted">Aucun étudiant trouvé</p></div>';
+                return;
+            }
+
+            container.innerHTML = students.map(student => `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <i class="bi bi-person-circle text-primary" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="card-title text-center">${student.name}</h5>
+                            <p class="card-text text-center">
+                                <small class="text-muted">${student.email}</small>
+                            </p>
+                            <div class="text-center mb-2">
+                                <span class="badge bg-info">${student.years}ème année</span>
+                                <span class="badge bg-secondary">${student.major}</span>
+                            </div>
+                            <div class="text-center">
+                                <small class="text-muted">
+                                    ${student.enrolledCourses?.length || 0} cours suivi(s)
+                                </small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <button class="btn btn-sm btn-primary w-100" onclick="showStudentDetails(${student.id})">
+                                <i class="bi bi-eye"></i> Voir détails
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Afficher les détails d'un étudiant
+        function showStudentDetails(studentId) {
+            const student = myStudents.find(s => s.id === studentId);
+            if (!student) return;
+
+            document.getElementById('studentDetailsTitle').textContent = student.name;
+            document.getElementById('studentDetailsBody').innerHTML = `
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-person"></i> Informations personnelles</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Nom:</strong></td><td>${student.name}</td></tr>
+                            <tr><td><strong>Email:</strong></td><td>${student.email}</td></tr>
+                            <tr><td><strong>Année:</strong></td><td>${student.years}ème année</td></tr>
+                            <tr><td><strong>Filière:</strong></td><td>${student.major}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-graph-up"></i> Statistiques</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Cours suivis:</strong></td><td>${student.enrolledCourses?.length || 0}</td></tr>
+                            <tr><td><strong>Inscrit depuis:</strong></td><td>${new Date().toLocaleDateString('fr-FR')}</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h6><i class="bi bi-book"></i> Cours suivis avec moi</h6>
+                    ${student.enrolledCourses && student.enrolledCourses.length > 0 ? `
+                        <ul class="list-group">
+                            ${student.enrolledCourses.map(course => `
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="bi bi-book"></i> ${course.name}
+                                        <br><small class="text-muted">${course.code || 'N/A'}</small>
+                                    </div>
+                                    <span class="badge bg-primary">${course.credits || 3} crédits</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    ` : '<p class="text-muted">Aucun cours suivi</p>'}
+                </div>
+            `;
+
+            new bootstrap.Modal(document.getElementById('studentDetailsModal')).show();
+        }
+
+        // Mettre à jour les statistiques
+        function updateStats() {
+            document.getElementById('totalStudents').textContent = myStudents.length;
+            document.getElementById('totalCourses').textContent = myCourses.length;
+            document.getElementById('totalEnrollments').textContent =
+                enrollments.filter(e => myCourses.some(c => c.id === e.course?.id)).length;
+        }
+
+        // Peupler le filtre de cours
+        function populateCourseFilter() {
+            const select = document.getElementById('filterCourse');
+            select.innerHTML = '<option value="">Tous mes cours</option>' +
+                myCourses.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        }
+
+        // Exporter vers Excel (placeholder)
+        function exportToExcel() {
+            alert('Fonctionnalité d\'export en cours de développement');
+        }
+
+        // Recherche
+        document.getElementById('searchStudent').addEventListener('input', function(e) {
+            const search = e.target.value.toLowerCase();
+            const filtered = myStudents.filter(s =>
+                s.name.toLowerCase().includes(search) ||
+                s.email.toLowerCase().includes(search)
+            );
+            displayStudents(filtered);
+        });
+
+        // Filtre par cours
+        document.getElementById('filterCourse').addEventListener('change', function(e) {
+            const courseId = parseInt(e.target.value);
+            if (!courseId) {
+                displayStudents(myStudents);
+                return;
+            }
+
+            const filtered = myStudents.filter(s =>
+                s.enrolledCourses?.some(c => c.id === courseId)
+            );
+            displayStudents(filtered);
+        });
+
+        // Filtre par année
+        document.getElementById('filterYear').addEventListener('change', function(e) {
+            const year = parseInt(e.target.value);
+            const filtered = year ?
+                myStudents.filter(s => s.years === year) :
+                myStudents;
+            displayStudents(filtered);
+        });
+
+        // Charger au démarrage
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</div>
+</body>
+</html>

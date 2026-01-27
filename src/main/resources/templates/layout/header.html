@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="header">
+    <div class="page-header">
+        <h1 th:text="${pageTitle}">Titre de la page</h1>
+        <p th:text="${pageSubtitle}" class="page-subtitle">Sous-titre de la page</p>
+
+        <div th:if="${breadcrumbs}" class="breadcrumbs">
+            <a th:href="@{/}">Accueil</a>
+            <span th:each="crumb : ${breadcrumbs}" th:class="${crumbStat.last} ? 'active' : ''">
+                    <i class="fas fa-chevron-right"></i>
+                    <span th:if="${!crumbStat.last}">
+                        <a th:href="${crumb.url}" th:text="${crumb.name}"></a>
+                    </span>
+                    <span th:unless="${!crumbStat.last}" th:text="${crumb.name}"></span>
+                </span>
+        </div>
+    </div>
+
+    <div th:if="${#lists.size(alerts) > 0}" class="alerts">
+        <div th:each="alert : ${alerts}" th:class="'alert alert-' + ${alert.type}">
+            <i th:class="'fas fa-' + ${alert.icon}"></i>
+            <span th:text="${alert.message}"></span>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-mortarboard-fill"></i> School Management
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <!-- Admin Menu -->
+                <li class="nav-item dropdown" th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-shield-check"></i> Admin
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" th:href="@{/admin/dashboard}">Dashboard</a></li>
+                        <li><a class="dropdown-item" th:href="@{/admin/students}">Étudiants</a></li>
+                        <li><a class="dropdown-item" th:href="@{/admin/teachers}">Enseignants</a></li>
+                        <li><a class="dropdown-item" th:href="@{/admin/courses}">Cours</a></li>
+                        <li><a class="dropdown-item" th:href="@{/admin/enrollments}">Inscriptions</a></li>
+                    </ul>
+                </li>
+
+                <!-- Teacher Menu -->
+                <li class="nav-item dropdown" th:if="${#authorization.expression('hasRole(''TEACHER'')')}">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-badge"></i> Enseignant
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" th:href="@{/teacher/dashboard}">Dashboard</a></li>
+                        <li><a class="dropdown-item" th:href="@{/teacher/my-courses}">Mes Cours</a></li>
+                        <li><a class="dropdown-item" th:href="@{/teacher/students}">Mes Étudiants</a></li>
+                    </ul>
+                </li>
+
+                <!-- Student Menu -->
+                <li class="nav-item dropdown" th:if="${#authorization.expression('hasRole(''STUDENT'')')}">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person"></i> Étudiant
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" th:href="@{/student/dashboard}">Dashboard</a></li>
+                        <li><a class="dropdown-item" th:href="@{/student/my-courses}">Mes Cours</a></li>
+                        <li><a class="dropdown-item" th:href="@{/student/enroll}">S'inscrire</a></li>
+                    </ul>
+                </li>
+
+                <!-- User Info -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle"></i>
+                        <span th:text="${#authentication.name}">Utilisateur</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/profile"><i class="bi bi-person"></i> Profil</a></li>
+                        <li><a class="dropdown-item" href="/settings"><i class="bi bi-gear"></i> Paramètres</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form th:action="@{/logout}" method="post" class="dropdown-item p-0">
+                                <button type="submit" class="btn btn-link dropdown-item">
+                                    <i class="bi bi-box-arrow-right"></i> Déconnexion
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+</body>
+</html>

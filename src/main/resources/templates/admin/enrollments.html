@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Gestion Inscriptions - Admin</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-clipboard-check"></i> Gestion des Inscriptions</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button type="button" class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#addEnrollmentModal">
+                <i class="bi bi-plus-circle"></i> Nouvelle inscription
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="text-uppercase">Total inscriptions</h6>
+                    <h3 id="totalEnrollments">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="text-uppercase">Année académique</h6>
+                    <h3>2025/2026</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="text-uppercase">Cours actifs</h6>
+                    <h3 id="activeCourses">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <input type="text" class="form-control" id="searchEnrollment"
+                   placeholder="Rechercher étudiant ou cours...">
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filterCourse">
+                <option value="">Tous les cours</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filterYear">
+                <option value="">Toutes les années</option>
+                <option value="2025/2026">2025/2026</option>
+                <option value="2024/2025">2024/2025</option>
+                <option value="2023/2024">2023/2024</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-outline-secondary w-100" onclick="loadEnrollments()">
+                <i class="bi bi-arrow-clockwise"></i> Actualiser
+            </button>
+        </div>
+    </div>
+
+    <!-- Tableau des inscriptions -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Étudiant</th>
+                        <th>Cours</th>
+                        <th>Code cours</th>
+                        <th>Enseignant</th>
+                        <th>Année académique</th>
+                        <th>Date inscription</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="enrollmentsTableBody">
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nouvelle Inscription -->
+    <div class="modal fade" id="addEnrollmentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">Nouvelle inscription</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="enrollmentForm">
+                        <div class="mb-3">
+                            <label for="enrollStudent" class="form-label">Étudiant *</label>
+                            <select class="form-select" id="enrollStudent" required>
+                                <option value="">Sélectionner un étudiant...</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="enrollCourse" class="form-label">Cours *</label>
+                            <select class="form-select" id="enrollCourse" required>
+                                <option value="">Sélectionner un cours...</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="enrollAcademicYear" class="form-label">Année académique *</label>
+                            <select class="form-select" id="enrollAcademicYear" required>
+                                <option value="2025/2026" selected>2025/2026</option>
+                                <option value="2024/2025">2024/2025</option>
+                            </select>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <small>L'inscription sera enregistrée avec la date actuelle.</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-info text-white" onclick="saveEnrollment()">
+                        Inscrire
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let enrollments = [];
+        let students = [];
+        let courses = [];
+
+        // Charger toutes les données
+        function loadData() {
+            Promise.all([
+                fetch('/api/courses/enrollments').then(r => r.json()),
+                fetch('/api/v1/student').then(r => r.json()),
+                fetch('/api/courses').then(r => r.json())
+            ])
+            .then(([enrollmentsData, studentsData, coursesData]) => {
+                enrollments = enrollmentsData;
+                students = studentsData;
+                courses = coursesData;
+
+                displayEnrollments(enrollments);
+                populateSelects();
+                updateStats();
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                document.getElementById('enrollmentsTableBody').innerHTML =
+                    '<tr><td colspan="8" class="text-center text-danger">Erreur de chargement</td></tr>';
+            });
+        }
+
+        // Afficher les inscriptions
+        function displayEnrollments(data) {
+            const tbody = document.getElementById('enrollmentsTableBody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Aucune inscription trouvée</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(enrollment => `
+                <tr>
+                    <td>${enrollment.id}</td>
+                    <td>
+                        <i class="bi bi-person-circle text-primary"></i>
+                        ${enrollment.student?.name || 'N/A'}
+                    </td>
+                    <td>${enrollment.course?.name || 'N/A'}</td>
+                    <td><span class="badge bg-secondary">${enrollment.course?.code || 'N/A'}</span></td>
+                    <td>
+                        ${enrollment.course?.teacher ?
+                            `<i class="bi bi-person-badge text-success"></i> ${enrollment.course.teacher.name}` :
+                            '<span class="text-muted">Non assigné</span>'
+                        }
+                    </td>
+                    <td><span class="badge bg-info">${enrollment.academicYear || '2025/2026'}</span></td>
+                    <td>${enrollment.enrollmentDate || new Date().toLocaleDateString('fr-FR')}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteEnrollment(${enrollment.id})"
+                                title="Annuler inscription">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Peupler les sélecteurs
+        function populateSelects() {
+            // Sélecteur étudiants
+            const studentSelect = document.getElementById('enrollStudent');
+            studentSelect.innerHTML = '<option value="">Sélectionner un étudiant...</option>' +
+                students.map(s => `<option value="${s.id}">${s.name} - ${s.email}</option>`).join('');
+
+            // Sélecteur cours
+            const courseSelect = document.getElementById('enrollCourse');
+            courseSelect.innerHTML = '<option value="">Sélectionner un cours...</option>' +
+                courses.map(c => `<option value="${c.id}">${c.name} (${c.code})</option>`).join('');
+
+            // Filtre cours
+            const filterCourse = document.getElementById('filterCourse');
+            filterCourse.innerHTML = '<option value="">Tous les cours</option>' +
+                courses.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        }
+
+        // Mettre à jour les statistiques
+        function updateStats() {
+            document.getElementById('totalEnrollments').textContent = enrollments.length;
+            document.getElementById('activeCourses').textContent = courses.length;
+        }
+
+        // Enregistrer une inscription
+        function saveEnrollment() {
+            const studentId = document.getElementById('enrollStudent').value;
+            const courseId = document.getElementById('enrollCourse').value;
+            const academicYear = document.getElementById('enrollAcademicYear').value;
+
+            if (!studentId || !courseId) {
+                alert('Veuillez sélectionner un étudiant et un cours');
+                return;
+            }
+
+            fetch(`/api/courses/enroll/${studentId}/${courseId}?academicYear=${academicYear}`, {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('addEnrollmentModal')).hide();
+                    loadData();
+                    document.getElementById('enrollmentForm').reset();
+                }
+            })
+            .catch(error => console.error('Erreur:', error));
+        }
+
+        // Supprimer une inscription
+        function deleteEnrollment(id) {
+            if (confirm('Êtes-vous sûr de vouloir annuler cette inscription ?')) {
+                // Implémenter l'API de suppression si nécessaire
+                alert('Fonctionnalité de suppression à implémenter dans le backend');
+            }
+        }
+
+        // Recherche
+        document.getElementById('searchEnrollment').addEventListener('input', function(e) {
+            const search = e.target.value.toLowerCase();
+            const filtered = enrollments.filter(enr =>
+                enr.student?.name.toLowerCase().includes(search) ||
+                enr.course?.name.toLowerCase().includes(search)
+            );
+            displayEnrollments(filtered);
+        });
+
+        // Filtre par cours
+        document.getElementById('filterCourse').addEventListener('change', function(e) {
+            const courseId = parseInt(e.target.value);
+            const filtered = courseId ?
+                enrollments.filter(enr => enr.course?.id === courseId) :
+                enrollments;
+            displayEnrollments(filtered);
+        });
+
+        // Filtre par année
+        document.getElementById('filterYear').addEventListener('change', function(e) {
+            const year = e.target.value;
+            const filtered = year ?
+                enrollments.filter(enr => enr.academicYear === year) :
+                enrollments;
+            displayEnrollments(filtered);
+        });
+
+        // Charger au démarrage
+        document.addEventListener('DOMContentLoaded', loadData);
+        function loadEnrollments() { loadData(); }
+
+        // Réinitialiser le formulaire
+        document.getElementById('addEnrollmentModal').addEventListener('hidden.bs.modal', function () {
+            document.getElementById('enrollmentForm').reset();
+        });
+    </script>
+</div>
+</body>
+</html>

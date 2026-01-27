@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Gestion Enseignants - Admin</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-person-badge"></i> Gestion des Enseignants</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTeacherModal">
+                <i class="bi bi-person-plus"></i> Ajouter un enseignant
+            </button>
+        </div>
+    </div>
+
+    <!-- Barre de recherche et filtres -->
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <input type="text" class="form-control" id="searchTeacher" placeholder="Rechercher par nom ou email...">
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" id="filterFaculty">
+                <option value="">Toutes les facultés</option>
+                <option value="Sciences">Sciences</option>
+                <option value="Lettres">Lettres</option>
+                <option value="Médecine">Médecine</option>
+                <option value="Droit">Droit</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Tableau des enseignants -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom</th>
+                        <th>Email</th>
+                        <th>Faculté</th>
+                        <th>Diplôme</th>
+                        <th>Cours assignés</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="teachersTableBody">
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ajouter/Modifier Enseignant -->
+    <div class="modal fade" id="addTeacherModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="modalTitle">Ajouter un enseignant</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="teacherForm">
+                        <input type="hidden" id="teacherId">
+
+                        <div class="mb-3">
+                            <label for="teacherName" class="form-label">Nom complet *</label>
+                            <input type="text" class="form-control" id="teacherName" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="teacherEmail" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="teacherEmail" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="teacherFaculty" class="form-label">Faculté *</label>
+                            <select class="form-select" id="teacherFaculty" required>
+                                <option value="">Sélectionner...</option>
+                                <option value="Sciences">Sciences</option>
+                                <option value="Lettres">Lettres</option>
+                                <option value="Médecine">Médecine</option>
+                                <option value="Droit">Droit</option>
+                                <option value="Économie">Économie</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="teacherDegree" class="form-label">Diplôme *</label>
+                            <select class="form-select" id="teacherDegree" required>
+                                <option value="">Sélectionner...</option>
+                                <option value="Licence">Licence</option>
+                                <option value="Master">Master</option>
+                                <option value="Doctorat">Doctorat</option>
+                                <option value="PhD">PhD</option>
+                                <option value="Professeur">Professeur</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-success" onclick="saveTeacher()">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let teachers = [];
+
+        // Charger les enseignants
+        function loadTeachers() {
+            fetch('/api/v1/teacher')
+                .then(response => response.json())
+                .then(data => {
+                    teachers = data;
+                    displayTeachers(teachers);
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    document.getElementById('teachersTableBody').innerHTML =
+                        '<tr><td colspan="7" class="text-center text-danger">Erreur de chargement</td></tr>';
+                });
+        }
+
+        // Afficher les enseignants
+        function displayTeachers(data) {
+            const tbody = document.getElementById('teachersTableBody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Aucun enseignant trouvé</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(teacher => `
+                <tr>
+                    <td>${teacher.id}</td>
+                    <td>
+                        <i class="bi bi-person-badge-fill text-success"></i>
+                        ${teacher.name}
+                    </td>
+                    <td>${teacher.email}</td>
+                    <td><span class="badge bg-success">${teacher.faculty}</span></td>
+                    <td><span class="badge bg-secondary">${teacher.degree}</span></td>
+                    <td>
+                        <span class="badge bg-info">0 cours</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editTeacher(${teacher.id})"
+                                title="Modifier">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="viewCourses(${teacher.id})"
+                                title="Voir les cours">
+                            <i class="bi bi-book"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTeacher(${teacher.id})"
+                                title="Supprimer">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Enregistrer un enseignant
+        function saveTeacher() {
+            const id = document.getElementById('teacherId').value;
+            const teacher = {
+                name: document.getElementById('teacherName').value,
+                email: document.getElementById('teacherEmail').value,
+                faculty: document.getElementById('teacherFaculty').value,
+                degree: document.getElementById('teacherDegree').value
+            };
+
+            const url = id ? `/api/v1/teacher/${id}` : '/api/v1/teacher';
+            const method = id ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(teacher)
+            })
+            .then(response => {
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('addTeacherModal')).hide();
+                    loadTeachers();
+                    document.getElementById('teacherForm').reset();
+                }
+            })
+            .catch(error => console.error('Erreur:', error));
+        }
+
+        // Modifier un enseignant
+        function editTeacher(id) {
+            const teacher = teachers.find(t => t.id === id);
+            if (teacher) {
+                document.getElementById('teacherId').value = teacher.id;
+                document.getElementById('teacherName').value = teacher.name;
+                document.getElementById('teacherEmail').value = teacher.email;
+                document.getElementById('teacherFaculty').value = teacher.faculty;
+                document.getElementById('teacherDegree').value = teacher.degree;
+                document.getElementById('modalTitle').textContent = 'Modifier l\'enseignant';
+                new bootstrap.Modal(document.getElementById('addTeacherModal')).show();
+            }
+        }
+
+        // Supprimer un enseignant
+        function deleteTeacher(id) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cet enseignant ?')) {
+                fetch(`/api/v1/teacher/${id}`, { method: 'DELETE' })
+                    .then(response => {
+                        if (response.ok) loadTeachers();
+                    })
+                    .catch(error => console.error('Erreur:', error));
+            }
+        }
+
+        // Voir les cours d'un enseignant
+        function viewCourses(id) {
+            window.location.href = `/admin/courses?teacherId=${id}`;
+        }
+
+        // Recherche
+        document.getElementById('searchTeacher').addEventListener('input', function(e) {
+            const search = e.target.value.toLowerCase();
+            const filtered = teachers.filter(t =>
+                t.name.toLowerCase().includes(search) ||
+                t.email.toLowerCase().includes(search)
+            );
+            displayTeachers(filtered);
+        });
+
+        // Filtre par faculté
+        document.getElementById('filterFaculty').addEventListener('change', function(e) {
+            const faculty = e.target.value;
+            const filtered = faculty ? teachers.filter(t => t.faculty === faculty) : teachers;
+            displayTeachers(filtered);
+        });
+
+        // Charger au démarrage
+        document.addEventListener('DOMContentLoaded', loadTeachers);
+
+        // Réinitialiser le formulaire
+        document.getElementById('addTeacherModal').addEventListener('hidden.bs.modal', function () {
+            document.getElementById('teacherForm').reset();
+            document.getElementById('teacherId').value = '';
+            document.getElementById('modalTitle').textContent = 'Ajouter un enseignant';
+        });
+    </script>
+</div>
+</body>
+</html>

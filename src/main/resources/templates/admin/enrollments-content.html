@@ -1,0 +1,12 @@
+<h2>Enrollments</h2>
+
+<table>
+    <tr>
+        <th>Student</th><th>Course</th><th>Year</th>
+    </tr>
+    <tr th:each="e : ${enrollments}">
+        <td th:text="${e.student.name}"></td>
+        <td th:text="${e.course.name}"></td>
+        <td th:text="${e.academicYear}"></td>
+    </tr>
+</table>

@@ -1,0 +1,15 @@
+<h2>Students</h2>
+
+<table>
+    <tr>
+        <th>Name</th><th>Email</th><th>Major</th><th>Action</th>
+    </tr>
+    <tr th:each="s : ${students}">
+        <td th:text="${s.name}"></td>
+        <td th:text="${s.email}"></td>
+        <td th:text="${s.major}"></td>
+        <td>
+            <a th:href="@{/admin/students/delete/{id}(id=${s.id})}">Delete</a>
+        </td>
+    </tr>
+</table>

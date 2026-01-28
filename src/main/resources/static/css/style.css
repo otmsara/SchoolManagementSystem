@@ -110,3 +110,24 @@ body{
 .registration-form button:hover {
   background-color: #ffc107; /* Yellow on hover */
 }
+
+
+
+body {
+  font-family: Arial;
+  background: #f4f6f9;
+  text-align: center;
+}
+
+input {
+  padding: 10px;
+  margin: 5px;
+}
+
+button {
+  padding: 10px 20px;
+  background: #3498db;
+  color: white;
+  border: none;
+}
+

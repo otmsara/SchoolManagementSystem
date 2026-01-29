@@ -1,14 +1,9 @@
 package com.example.demo.security.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import org.springframework.data.annotation.Id;
-
-import javax.management.relation.Role;
+import jakarta.persistence.*;
 
 @Entity
+@Table(name = "\"user\"") // Use double quotes
 public class User {
 
     @Id

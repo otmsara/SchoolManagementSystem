@@ -7,15 +7,18 @@
 <div th:fragment="content">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
         <h1 class="h2"><i class="bi bi-person-badge"></i> Gestion des Enseignants</h1>
+
+    </div>
+
+    <!-- Barre de recherche et filtres -->
+    <div class="row mb-3">
+
         <div class="btn-toolbar mb-2 mb-md-0">
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTeacherModal">
                 <i class="bi bi-person-plus"></i> Ajouter un enseignant
             </button>
         </div>
-    </div>
 
-    <!-- Barre de recherche et filtres -->
-    <div class="row mb-3">
         <div class="col-md-8">
             <input type="text" class="form-control" id="searchTeacher" placeholder="Rechercher par nom ou email...">
         </div>

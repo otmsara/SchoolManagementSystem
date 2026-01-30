@@ -7,6 +7,8 @@ import com.example.demo.com.example.demo.model.Student;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.bind.annotation.*;
+
 @RestController
 @RequestMapping("/api/v1/student")
 public class StudentController {
@@ -17,15 +19,13 @@ public class StudentController {
         this.studentService = studentService;
     }
 
-    // find a way to use parameters in the get request, mess some stuff up, see what
-    // happens,then try to fix it
     @GetMapping()
     public List<Student> getStudents() {
         return studentService.getStudents();
     }
 
     @PostMapping
-    public void registerNewStudent(Student student) {
+    public void registerNewStudent(@RequestBody Student student) {  // ✅ AJOUT @RequestBody
         studentService.addNewStudent(student);
     }
 

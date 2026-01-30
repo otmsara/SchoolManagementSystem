@@ -1,4 +1,5 @@
 package com.example.demo.com.example.demo.controller;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -7,7 +8,7 @@ public class WebController {
 
     @GetMapping("/")
     public String home() {
-        return "redirect:/admin/dashboard";  // Redirection temporaire
+        return "redirect:/admin/dashboard";
     }
 
     @GetMapping("/login")

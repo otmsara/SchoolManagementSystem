@@ -7,10 +7,12 @@ import com.example.demo.com.example.demo.model.Teacher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.bind.annotation.*;
+
 @RestController
-@RequestMapping(path = { "api/v1/teacher"})
+@RequestMapping(path = {"api/v1/teacher"})
 public class TeacherController {
-private final TeacherService teacherService;
+    private final TeacherService teacherService;
 
     @Autowired
     public TeacherController(TeacherService teacherService) {
@@ -23,12 +25,12 @@ private final TeacherService teacherService;
     }
 
     @PostMapping
-    public void registerNewTeacher(Teacher teacher) {
+    public void registerNewTeacher(@RequestBody Teacher teacher) {  // ✅ AJOUT @RequestBody
         teacherService.addNewTeacher(teacher);
     }
 
-    @DeleteMapping(path = "{studentID}")
-    public void deleteTeacher(@PathVariable("studentID") Long teacherId) {
+    @DeleteMapping(path = "{teacherId}")  // ✅ CORRECTION: teacherId au lieu de studentID
+    public void deleteTeacher(@PathVariable("teacherId") Long teacherId) {
         teacherService.deleteTeacher(teacherId);
     }
 

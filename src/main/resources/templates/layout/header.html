@@ -1,27 +1,430 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<body>
-<div th:fragment="header">
-    <div class="page-header">
-        <h1 th:text="${pageTitle}">Titre de la page</h1>
-        <p th:text="${pageSubtitle}" class="page-subtitle">Sous-titre de la page</p>
+<head>
+    <style>
+        /* Variables CSS pour le header */
+        :root {
+            --color-primary: #667eea;
+            --color-success: #06d6a0;
+            --color-danger: #ff6b6b;
+            --color-warning: #ffd93d;
+            --color-info: #4facfe;
+            --gradient-success: linear-gradient(135deg, #06d6a0 0%, #00b894 100%);
+            --gradient-danger: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            --gradient-warning: linear-gradient(135deg, #ffd93d 0%, #fcbf49 100%);
+            --gradient-info: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+            --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.20);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
 
-        <div th:if="${breadcrumbs}" class="breadcrumbs">
-            <a th:href="@{/}">Accueil</a>
-            <span th:each="crumb : ${breadcrumbs}" th:class="${crumbStat.last} ? 'active' : ''">
-                    <i class="fas fa-chevron-right"></i>
-                    <span th:if="${!crumbStat.last}">
-                        <a th:href="${crumb.url}" th:text="${crumb.name}"></a>
-                    </span>
-                    <span th:unless="${!crumbStat.last}" th:text="${crumb.name}"></span>
-                </span>
+        /* ========== PAGE HEADER MODERN ========== */
+        .page-header-modern {
+            margin-bottom: 2rem;
+            padding: 2rem 0;
+            position: relative;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .header-title-section {
+            padding: 1rem 0;
+        }
+
+        .title-wrapper {
+            position: relative;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+            animation: fadeInLeft 0.8s ease-out;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            color: #6c757d;
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0;
+            animation: fadeInLeft 1s ease-out;
+        }
+
+        /* Breadcrumbs Modernes */
+        .breadcrumbs-modern {
+            margin-top: 1.5rem;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .breadcrumbs-modern .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 0;
+        }
+
+        .breadcrumbs-modern .breadcrumb-item {
+            font-weight: 500;
+        }
+
+        .breadcrumbs-modern .breadcrumb-item a {
+            color: var(--color-primary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            transition: var(--transition-base);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .breadcrumbs-modern .breadcrumb-item a:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateX(3px);
+        }
+
+        .breadcrumbs-modern .breadcrumb-item.active {
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .breadcrumbs-modern .breadcrumb-item + .breadcrumb-item::before {
+            content: '→';
+            color: var(--color-primary);
+            font-weight: bold;
+        }
+
+        /* Header Actions */
+        .header-actions {
+            animation: fadeInRight 0.8s ease-out;
+        }
+
+        .header-actions .btn {
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-bounce);
+        }
+
+        .header-actions .btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* ========== ALERTS MODERN ========== */
+        .alerts-container {
+            margin-bottom: 1.5rem;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .alert-modern {
+            border: none;
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            box-shadow: var(--shadow-md);
+            border-left: 5px solid;
+            animation: slideInRight 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alert-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            animation: pulse 2s infinite;
+        }
+
+        .alert-modern.alert-success {
+            background: linear-gradient(135deg, rgba(6, 214, 160, 0.1) 0%, rgba(255, 255, 255, 0.9) 100%);
+            border-left-color: var(--color-success);
+        }
+
+        .alert-modern.alert-danger {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 255, 255, 0.9) 100%);
+            border-left-color: var(--color-danger);
+        }
+
+        .alert-modern.alert-warning {
+            background: linear-gradient(135deg, rgba(255, 217, 61, 0.1) 0%, rgba(255, 255, 255, 0.9) 100%);
+            border-left-color: var(--color-warning);
+        }
+
+        .alert-modern.alert-info {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(255, 255, 255, 0.9) 100%);
+            border-left-color: var(--color-info);
+        }
+
+        .alert-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .alert-icon {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .alert-success .alert-icon {
+            background: var(--gradient-success);
+            color: white;
+        }
+
+        .alert-danger .alert-icon {
+            background: var(--gradient-danger);
+            color: white;
+        }
+
+        .alert-warning .alert-icon {
+            background: var(--gradient-warning);
+            color: white;
+        }
+
+        .alert-info .alert-icon {
+            background: var(--gradient-info);
+            color: white;
+        }
+
+        .alert-message strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-weight: 700;
+        }
+
+        /* ========== STATS CARDS ========== */
+        .stats-cards-container {
+            margin: 2rem 0;
+        }
+
+        .card-stats {
+            border: none;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition-bounce);
+            color: white;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card-stats::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(50%, -50%);
+        }
+
+        .card-stats:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-icon {
+            font-size: 3.5rem;
+            opacity: 0.6;
+            transition: var(--transition-base);
+        }
+
+        .card-stats:hover .stat-icon {
+            opacity: 1;
+            transform: rotate(360deg) scale(1.2);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Page Header Fragment Modernisé -->
+<div th:fragment="header">
+    <!-- Page Header avec Gradient -->
+    <div class="page-header-modern">
+        <div class="container-fluid">
+            <!-- Title Section with Gradient Background -->
+            <div class="header-title-section">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="title-wrapper">
+                            <h1 class="page-title gradient-text" th:text="${pageTitle}">
+                                Titre de la page
+                            </h1>
+                            <p class="page-subtitle" th:text="${pageSubtitle}">
+                                Sous-titre de la page
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <!-- Quick Actions -->
+                        <div class="header-actions" th:if="${headerActions}">
+                            <div th:each="action : ${headerActions}" class="d-inline-block ms-2">
+                                <a th:href="${action.url}"
+                                   th:class="'btn btn-' + ${action.type} + ' btn-sm'">
+                                    <i th:class="'bi bi-' + ${action.icon}"></i>
+                                    <span th:text="${action.label}"></span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Breadcrumbs Modernes -->
+            <div th:if="${breadcrumbs}" class="breadcrumbs-modern">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/">
+                                <i class="bi bi-house-door"></i>
+                                <span>Accueil</span>
+                            </a>
+                        </li>
+                        <li th:each="crumb : ${breadcrumbs}"
+                            th:class="${crumbStat.last} ? 'breadcrumb-item active' : 'breadcrumb-item'">
+                            <span th:if="${!crumbStat.last}">
+                                <a th:href="${crumb.url}">
+                                    <i th:if="${crumb.icon}" th:class="'bi bi-' + ${crumb.icon}"></i>
+                                    <span th:text="${crumb.name}"></span>
+                                </a>
+                            </span>
+                            <span th:unless="${!crumbStat.last}" th:text="${crumb.name}"></span>
+                        </li>
+                    </ol>
+                </nav>
+            </div>
         </div>
     </div>
 
-    <div th:if="${#lists.size(alerts) > 0}" class="alerts">
-        <div th:each="alert : ${alerts}" th:class="'alert alert-' + ${alert.type}">
-            <i th:class="'fas fa-' + ${alert.icon}"></i>
-            <span th:text="${alert.message}"></span>
+    <!-- Alerts Modernisés -->
+    <div th:if="${alerts != null and #lists.size(alerts) > 0}" class="alerts-container">
+        <div class="container-fluid">
+            <div th:each="alert : ${alerts}"
+                 th:class="'alert alert-modern alert-' + ${alert.type} + ' alert-dismissible fade show'"
+                 role="alert">
+                <div class="alert-content">
+                    <div class="alert-icon">
+                        <i th:class="'bi bi-' + ${alert.icon}"></i>
+                    </div>
+                    <div class="alert-message">
+                        <strong th:if="${alert.title}" th:text="${alert.title}"></strong>
+                        <p class="mb-0" th:text="${alert.message}"></p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards (optionnel) -->
+    <div th:if="${statsCards}" class="stats-cards-container">
+        <div class="container-fluid">
+            <div class="row g-4">
+                <div th:each="stat : ${statsCards}"
+                     th:class="'col-md-' + (12 / #lists.size(statsCards))">
+                    <div th:class="'card card-stats card-gradient-' + ${stat.type}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-uppercase fw-bold mb-1" th:text="${stat.title}"></h6>
+                                    <h2 class="mb-0" th:text="${stat.value}"></h2>
+                                    <small th:if="${stat.subtitle}" th:text="${stat.subtitle}"></small>
+                                </div>
+                                <div class="stat-icon">
+                                    <i th:class="'bi bi-' + ${stat.icon}"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

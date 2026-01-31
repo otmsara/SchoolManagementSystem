@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
 <head>
     <title>Dashboard Étudiant</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 <div th:fragment="content">
@@ -206,53 +207,90 @@
             })
             .catch(error => console.error('Erreur:', error));
         }
-        return true;
-    }
 
-    function checkRole(requiredRole) {
-        const role = localStorage.getItem('role');
-        if (role !== requiredRole) {
-            alert('Accès non autorisé pour votre rôle');
-            window.location.href = '/login';
-            return false;
-        }
-        return true;
-    }
+        // Afficher les informations de l'étudiant
+        function displayStudentInfo() {
+            if (!student) return;
 
-    function logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
-        localStorage.removeItem('username');
-        window.location.href = '/login';
-    }
-
-    function getAuthHeaders() {
-        const token = localStorage.getItem('token');
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-    }
-
-    // ============================================
-    // INITIALISATION
-    // ============================================
-    document.addEventListener('DOMContentLoaded', async function() {
-        // Vérifier l'authentification
-        if (!checkAuth() || !checkRole('STUDENT')) {
-            return;
+            document.getElementById('studentName').textContent = student.name;
+            document.getElementById('studentEmail').textContent = student.email;
+            document.getElementById('studentYear').innerHTML =
+                `<span class="badge bg-info">${student.years}ème année</span>`;
+            document.getElementById('studentMajor').textContent = student.major;
+            document.getElementById('studentId').textContent = `#${student.id}`;
         }
 
-        // Afficher le username
-        const username = localStorage.getItem('username');
-        document.getElementById('username').textContent = username;
-        document.getElementById('welcomeUsername').textContent = username;
+        // Afficher les cours de l'étudiant
+        function displayMyCourses() {
+            const container = document.getElementById('myCoursesContainer');
 
-        // Charger les statistiques (simulé pour l'instant)
-        document.getElementById('coursesCount').textContent = '0';
-        document.getElementById('creditsCount').textContent = '0';
-        document.getElementById('semesterCount').textContent = '2025-1';
-    });
-</script>
+            if (enrollments.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            Vous n'êtes inscrit à aucun cours.
+                            <a href="/student/enroll" class="alert-link">Inscrivez-vous maintenant!</a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = enrollments.map(enrollment => {
+                const course = enrollment.course;
+                if (!course) return '';
+
+                return `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card border-success h-100">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-book"></i> ${course.name}
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-2">
+                                    <span class="badge bg-secondary">${course.code || 'N/A'}</span>
+                                    <span class="badge bg-warning text-dark">${course.credits || 3} crédits</span>
+                                </p>
+                                <p class="small text-muted mb-2">
+                                    ${course.description || 'Pas de description'}
+                                </p>
+                                ${course.teacher ? `
+                                    <p class="mb-0 small">
+                                        <i class="bi bi-person-badge text-success"></i>
+                                        <strong>Enseignant:</strong> ${course.teacher.name}
+                                    </p>
+                                ` : ''}
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar-check"></i>
+                                    Inscrit le ${enrollment.enrollmentDate || new Date().toLocaleDateString('fr-FR')}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Mettre à jour les statistiques
+        function updateStats() {
+            document.getElementById('enrolledCoursesCount').textContent = enrollments.length;
+
+            const credits = enrollments.reduce((sum, e) => sum + (e.course?.credits || 3), 0);
+            document.getElementById('totalCredits').textContent = credits;
+
+            const enrolledCourseIds = enrollments.map(e => e.course?.id);
+            const available = allCourses.filter(c => !enrolledCourseIds.includes(c.id)).length;
+            document.getElementById('availableCoursesCount').textContent = available;
+        }
+
+        // Charger au démarrage
+        document.addEventListener('DOMContentLoaded', loadStudentData);
+    </script>
+</div>
 </body>
 </html>

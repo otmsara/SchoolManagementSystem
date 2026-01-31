@@ -2,37 +2,31 @@ package com.example.demo.controller;
 
 import com.example.demo.security.jwt.JwtUtil;
 import com.example.demo.security.model.AuthRequest;
-import com.example.demo.security.model.RegisterRequest;
 import com.example.demo.security.model.User;
 import com.example.demo.repository.UserRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-
 @RestController
-@RequestMapping("/api/auth")  // ✅ CORRECTION: Ajout du préfixe /api
+@RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthenticationManager authManager;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepo;
-    private final PasswordEncoder passwordEncoder;
 
     public AuthController(AuthenticationManager authManager,
                           JwtUtil jwtUtil,
-                          UserRepository userRepo,
-                          PasswordEncoder passwordEncoder) {
+                          UserRepository userRepo) {
         this.authManager = authManager;
         this.jwtUtil = jwtUtil;
         this.userRepo = userRepo;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody AuthRequest req) {
+    public Map<String, Object> login(@RequestBody AuthRequest req) {
         // Authenticate user
         authManager.authenticate(
                 new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
@@ -48,22 +42,13 @@ public class AuthController {
         // Generate JWT token with role
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
 
-        return Map.of("token", token);
+        // ✅ RETOUR AMÉLIORÉ : Token + Rôle pour redirection côté client
+        return Map.of(
+                "token", token,
+                "role", user.getRole().name(),
+                "username", user.getUsername()
+        );
     }
 
-
-    @PostMapping("/register")
-    public Map<String, String> register(@RequestBody RegisterRequest req) {
-        // Create user
-        var user = new com.example.demo.security.model.User();
-        user.setUsername(req.getUsername());
-        user.setPassword(passwordEncoder.encode(req.getPassword()));
-        user.setRole(com.example.demo.security.model.Role.STUDENT);
-
-        userRepo.save(user);
-
-        // Return success message
-        return Map.of("message", "User registered successfully");
-    }
-
+    // ✅ SUPPRESSION TOTALE DE LA MÉTHODE REGISTER
 }

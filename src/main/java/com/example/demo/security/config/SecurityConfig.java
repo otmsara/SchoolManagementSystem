@@ -32,32 +32,56 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authConfig
+    ) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+
+        http
+                .csrf(csrf -> csrf.disable())
+
+                .sessionManagement(sess ->
+                        sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
                 .authorizeHttpRequests(auth -> auth
+
+                        // PUBLIC - Pages et ressources statiques
                         .requestMatchers(
                                 "/",
                                 "/login",
-                                "/register",
+                                "/api/auth/login",
                                 "/js/**",
                                 "/css/**",
                                 "/images/**",
-                                "/favicon.ico",
-                                "/api/auth/**",
-                                "/dashboard"
+                                "/favicon.ico"
                         ).permitAll()
+
+                        // ✅ NOUVEAU : Permettre l'accès aux pages HTML des dashboards
+                        // La sécurité sera gérée côté client par JavaScript
+                        .requestMatchers(
+                                "/student/**",
+                                "/teacher/**",
+                                "/admin/**"
+                        ).permitAll()
+
+                        // API PROTÉGÉES par JWT
+                        .requestMatchers("/api/student/**").hasRole("STUDENT")
+                        .requestMatchers("/api/teacher/**").hasRole("TEACHER")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // EVERYTHING ELSE
                         .anyRequest().authenticated()
                 )
+
                 .userDetailsService(userService)
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
 }

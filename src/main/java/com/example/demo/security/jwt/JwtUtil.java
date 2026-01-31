@@ -2,6 +2,7 @@ package com.example.demo.security.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -9,12 +10,18 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import javax.crypto.SecretKey;
 
 @Component
 public class JwtUtil {
 
-    private final String SECRET = "mySecretKey123"; // à mettre plus tard dans application.properties
+    // Use a 256-bit key (32+ bytes) or store in application.properties as Base64
+    private final String SECRET = "wVvJ6fLx7Zp3u9YkS2h1Qe8tXc4rMbFv";
     private final long EXPIRATION_TIME = 1000 * 60 * 60 * 24; // 24h
+
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(SECRET.getBytes());
+    }
 
     // 1. Générer token avec rôle
     public String generateToken(String username, String role) {
@@ -26,7 +33,7 @@ public class JwtUtil {
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SignatureAlgorithm.HS256, SECRET)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -62,8 +69,9 @@ public class JwtUtil {
 
     // 6. Méthode centrale (clean)
     private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(SECRET)
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
     }

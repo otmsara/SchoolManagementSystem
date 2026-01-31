@@ -1,5 +1,5 @@
 async function login() {
-    const res = await fetch("/auth/login", {
+    const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
@@ -18,7 +18,7 @@ async function login() {
 }
 
 async function register() {
-    await fetch("/auth/register", {
+    await fetch("/api/auth/register", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
@@ -26,16 +26,6 @@ async function register() {
             password: password.value
         })
     });
-    window.location = "/login";
-}
 
-function authFetch(url, options = {}) {
-    const token = localStorage.getItem("token");
-    return fetch(url, {
-        ...options,
-        headers: {
-            ...options.headers,
-            "Authorization": "Bearer " + token
-        }
-    });
+    window.location = "/login";
 }

@@ -4,7 +4,7 @@ import com.example.demo.security.jwt.JwtUtil;
 import com.example.demo.security.model.AuthRequest;
 import com.example.demo.security.model.RegisterRequest;
 import com.example.demo.security.model.User;
-import com.example.demo.security.repository.UserRepository;
+import com.example.demo.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +13,7 @@ import java.util.Map;
 
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")  // ✅ CORRECTION: Ajout du préfixe /api
 public class AuthController {
 
     private final AuthenticationManager authManager;

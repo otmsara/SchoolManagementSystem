@@ -40,7 +40,17 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()  // Fixed: Added /api prefix
+                        .requestMatchers(
+                                "/",
+                                "/login",
+                                "/register",
+                                "/js/**",
+                                "/css/**",
+                                "/images/**",
+                                "/favicon.ico",
+                                "/api/auth/**",
+                                "/dashboard"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(userService)
@@ -49,4 +59,5 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 }

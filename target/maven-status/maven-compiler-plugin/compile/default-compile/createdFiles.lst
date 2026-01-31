@@ -21,7 +21,6 @@ com\example\demo\model\Student.class
 com\example\demo\controller\WebController.class
 com\example\demo\security\model\Role.class
 com\example\demo\model\Enrollment.class
-com\example\demo\security\repository\UserRepository.class
 com\example\demo\config\StudentConfig.class
 com\example\demo\config\TeacherConfig.class
 com\example\demo\model\Course.class

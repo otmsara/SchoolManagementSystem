@@ -87,7 +87,7 @@ public class Student {
         this.dob = dob;
     }
 
-    // ✅ CORRECTION PRINCIPALE : Vérification de null
+    // CORRECTION PRINCIPALE : Vérification de null
     public Integer getAge() {
         if (this.dob == null) {
             return null;  // ou return 0; si vous préférez

@@ -61,7 +61,7 @@ public class SecurityConfig {
                                 "/favicon.ico"
                         ).permitAll()
 
-                        // ✅ NOUVEAU : Permettre l'accès aux pages HTML des dashboards
+                        // NOUVEAU : Permettre l'accès aux pages HTML des dashboards
                         // La sécurité sera gérée côté client par JavaScript
                         .requestMatchers(
                                 "/student/**",

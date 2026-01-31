@@ -13,11 +13,11 @@ public class Course {
     private Long id;
 
     private String name;
-    private String code;  // ✅ AJOUT: Le frontend utilise 'code'
-    private String description;  // ✅ AJOUT: Le frontend utilise 'description'
+    private String code;  // AJOUT: Le frontend utilise 'code'
+    private String description;  // AJOUT: Le frontend utilise 'description'
     private String semester;
     private int credits;
-    private int capacity;  // ✅ AJOUT: Le frontend utilise 'capacity'
+    private int capacity;  // AJOUT: Le frontend utilise 'capacity'
 
     @ManyToOne
     @JoinColumn(name = "teacher_id")

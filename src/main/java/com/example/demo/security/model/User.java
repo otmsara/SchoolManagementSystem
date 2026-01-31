@@ -16,7 +16,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    // ✅ AJOUT DU CHAMP EMAIL
+    // AJOUT DU CHAMP EMAIL
     @Column(nullable = false, unique = true)
     private String email;
 
@@ -49,7 +49,7 @@ public class User {
         this.password = password;
     }
 
-    // ✅ GETTER/SETTER EMAIL
+    // GETTER/SETTER EMAIL
     public String getEmail() {
         return email;
     }

@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TeacherService {
 
 	private final TeacherRepository teacherRepository;
-	private final CourseRepository courseRepository;  // ✅ Une seule injection
+	private final CourseRepository courseRepository;  // Une seule injection
 
 	@Autowired
 	public TeacherService(TeacherRepository teacherRepository,

@@ -99,7 +99,7 @@ public class Teacher {
         this.faculty = faculty;
     }
 
-    // ✅ CORRECTION PRINCIPALE : Vérification de null
+    // CORRECTION PRINCIPALE : Vérification de null
     public Integer getAge() {
         if (this.dob == null) {
             return null;  // ou return 0; si vous préférez

@@ -33,7 +33,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        // ✅ BYPASS AUTH ENDPOINTS
+        // BYPASS AUTH ENDPOINTS
         if (path.startsWith("/api/auth/")
                 || path.equals("/login")
                 || path.equals("/register")) {
@@ -68,7 +68,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     }
                 }
             } catch (Exception e) {
-                // ❌ token invalide → clear context (important)
+                // token invalide → clear context (important)
                 SecurityContextHolder.clearContext();
             }
         }

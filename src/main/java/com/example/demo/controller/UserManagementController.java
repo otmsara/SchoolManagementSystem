@@ -22,7 +22,7 @@ public class UserManagementController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // ✅ ENDPOINT POUR CRÉER UN UTILISATEUR (ADMIN UNIQUEMENT)
+    // ENDPOINT POUR CRÉER UN UTILISATEUR (ADMIN UNIQUEMENT)
     @PostMapping("/create")
     public ResponseEntity<Map<String, String>> createUser(@RequestBody CreateUserRequest request) {
 
@@ -51,7 +51,7 @@ public class UserManagementController {
 
         userRepo.save(user);
 
-        // ✅ Retourner les credentials à envoyer par email
+        // Retourner les credentials à envoyer par email
         return ResponseEntity.ok(Map.of(
                 "message", "User created successfully",
                 "username", user.getUsername(),

@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class StudentService {
 
 	private final StudentRepository studentRepository;
-	private final CourseRepository courseRepository;  // ✅ Une seule injection
-	private final EnrollmentRepository enrollmentRepository;  // ✅ Une seule injection
+	private final CourseRepository courseRepository;  // Une seule injection
+	private final EnrollmentRepository enrollmentRepository;  // Une seule injection
 
 	@Autowired
 	public StudentService(StudentRepository studentRepository,
@@ -72,7 +72,7 @@ public class StudentService {
 		student.setMajor(major);
 	}
 
-	public Student getStudent(Long studentId) {  // ✅ Renommé pour éviter confusion
+	public Student getStudent(Long studentId) {  // Renommé pour éviter confusion
 		return studentRepository.findById(studentId)
 				.orElseThrow(() -> new IllegalStateException("student with id " + studentId + " does not exist"));
 	}

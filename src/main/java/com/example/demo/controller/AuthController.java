@@ -42,7 +42,7 @@ public class AuthController {
         // Generate JWT token with role
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
 
-        // ✅ RETOUR AMÉLIORÉ : Token + Rôle pour redirection côté client
+        // RETOUR AMÉLIORÉ : Token + Rôle pour redirection côté client
         return Map.of(
                 "token", token,
                 "role", user.getRole().name(),
@@ -50,5 +50,5 @@ public class AuthController {
         );
     }
 
-    // ✅ SUPPRESSION TOTALE DE LA MÉTHODE REGISTER
+    // SUPPRESSION TOTALE DE LA MÉTHODE REGISTER
 }

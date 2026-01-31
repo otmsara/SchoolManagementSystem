@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Mes Cours - Enseignant</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-book"></i> Mes Cours</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button class="btn btn-outline-secondary" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise"></i> Actualiser
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" class="form-control" id="searchCourse"
+                   placeholder="Rechercher un cours...">
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filterSemester">
+                <option value="">Tous les semestres</option>
+                <option value="1">Semestre 1</option>
+                <option value="2">Semestre 2</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Liste des cours -->
+    <div class="row" id="coursesContainer">
+        <div class="col-12 text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Détails du cours -->
+    <div class="modal fade" id="courseDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="courseDetailsTitle">Détails du cours</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="courseDetailsBody">
+                    <!-- Contenu chargé dynamiquement -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const currentTeacherId = 1; // TODO: ID réel de l'enseignant connecté
+        let myCourses = [];
+        let enrollments = [];
+
+        // Charger les cours
+        function loadMyCourses() {
+            Promise.all([
+                fetch('/api/courses').then(r => r.json()),
+                fetch('/api/courses/enrollments').then(r => r.json())
+            ])
+            .then(([courses, enrollmentsData]) => {
+                myCourses = courses.filter(c => c.teacher?.id === currentTeacherId);
+                enrollments = enrollmentsData;
+                displayCourses(myCourses);
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                document.getElementById('coursesContainer').innerHTML =
+                    '<div class="col-12"><div class="alert alert-danger">Erreur de chargement</div></div>';
+            });
+        }
+
+        // Afficher les cours
+        function displayCourses(courses) {
+            const container = document.getElementById('coursesContainer');
+
+            if (courses.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            Aucun cours n'est actuellement assigné à vous.
+                            Veuillez contacter l'administration.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = courses.map(course => {
+                const courseEnrollments = enrollments.filter(e => e.course?.id === course.id);
+                const studentCount = courseEnrollments.length;
+
+                return `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-book-fill"></i> ${course.name}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <span class="badge bg-secondary">${course.code || 'N/A'}</span>
+                                    <span class="badge bg-info">${course.credits || 3} crédits</span>
+                                    <span class="badge bg-warning text-dark">S${course.semester || 1}</span>
+                                </div>
+
+                                <p class="card-text small text-muted mb-3">
+                                    ${course.description || 'Pas de description disponible'}
+                                </p>
+
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-people-fill"></i> Étudiants inscrits
+                                    </small>
+                                    <strong class="text-primary">${studentCount}</strong>
+                                </div>
+
+                                <div class="progress mb-3" style="height: 20px;">
+                                    <div class="progress-bar ${studentCount > 20 ? 'bg-success' : 'bg-info'}"
+                                         style="width: ${(studentCount / (course.capacity || 30)) * 100}%">
+                                        ${studentCount} / ${course.capacity || 30}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <button class="btn btn-sm btn-primary w-100" onclick="showCourseDetails(${course.id})">
+                                    <i class="bi bi-eye"></i> Voir détails
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Afficher les détails d'un cours
+        function showCourseDetails(courseId) {
+            const course = myCourses.find(c => c.id === courseId);
+            if (!course) return;
+
+            const courseEnrollments = enrollments.filter(e => e.course?.id === courseId);
+
+            document.getElementById('courseDetailsTitle').textContent = course.name;
+            document.getElementById('courseDetailsBody').innerHTML = `
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-info-circle"></i> Informations générales</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Code:</strong></td><td>${course.code || 'N/A'}</td></tr>
+                            <tr><td><strong>Crédits:</strong></td><td>${course.credits || 3}</td></tr>
+                            <tr><td><strong>Semestre:</strong></td><td>${course.semester || 1}</td></tr>
+                            <tr><td><strong>Capacité:</strong></td><td>${course.capacity || 30} étudiants</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-graph-up"></i> Statistiques</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Inscrits:</strong></td><td>${courseEnrollments.length}</td></tr>
+                            <tr><td><strong>Places restantes:</strong></td><td>${(course.capacity || 30) - courseEnrollments.length}</td></tr>
+                            <tr><td><strong>Taux de remplissage:</strong></td><td>${Math.round((courseEnrollments.length / (course.capacity || 30)) * 100)}%</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <h6><i class="bi bi-card-text"></i> Description</h6>
+                    <p>${course.description || 'Aucune description disponible'}</p>
+                </div>
+
+                <div>
+                    <h6><i class="bi bi-people"></i> Étudiants inscrits (${courseEnrollments.length})</h6>
+                    ${courseEnrollments.length > 0 ? `
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Email</th>
+                                        <th>Année</th>
+                                        <th>Date d'inscription</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${courseEnrollments.map(e => `
+                                        <tr>
+                                            <td><i class="bi bi-person-circle"></i> ${e.student?.name || 'N/A'}</td>
+                                            <td>${e.student?.email || 'N/A'}</td>
+                                            <td><span class="badge bg-info">${e.student?.years || 'N/A'}</span></td>
+                                            <td>${e.enrollmentDate || new Date().toLocaleDateString('fr-FR')}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : '<p class="text-muted">Aucun étudiant inscrit pour le moment</p>'}
+                </div>
+            `;
+
+            new bootstrap.Modal(document.getElementById('courseDetailsModal')).show();
+        }
+
+        // Recherche
+        document.getElementById('searchCourse').addEventListener('input', function(e) {
+            const search = e.target.value.toLowerCase();
+            const filtered = myCourses.filter(c =>
+                c.name.toLowerCase().includes(search) ||
+                (c.code && c.code.toLowerCase().includes(search))
+            );
+            displayCourses(filtered);
+        });
+
+        // Filtre par semestre
+        document.getElementById('filterSemester').addEventListener('change', function(e) {
+            const semester = parseInt(e.target.value);
+            const filtered = semester ?
+                myCourses.filter(c => c.semester === semester) :
+                myCourses;
+            displayCourses(filtered);
+        });
+
+        // Charger au démarrage
+        document.addEventListener('DOMContentLoaded', loadMyCourses);
+    </script>
+</div>
+</body>
+</html>

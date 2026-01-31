@@ -18,18 +18,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class StudentService {
 
 	private final StudentRepository studentRepository;
+	private final CourseRepository courseRepository;  // ✅ Une seule injection
+	private final EnrollmentRepository enrollmentRepository;  // ✅ Une seule injection
+
 	@Autowired
-	private StudentRepository studentRepo;
-	@Autowired
-	private CourseRepository courseRepo;
-	@Autowired
-	private EnrollmentRepository enrollmentRepo;
-	@Autowired
-	public StudentService(StudentRepository studentRepository) {
+	public StudentService(StudentRepository studentRepository,
+						  CourseRepository courseRepository,
+						  EnrollmentRepository enrollmentRepository) {
 		this.studentRepository = studentRepository;
+		this.courseRepository = courseRepository;
+		this.enrollmentRepository = enrollmentRepository;
 	}
 
-	@GetMapping
 	public List<Student> getStudents() {
 		return studentRepository.findAll();
 	}
@@ -46,18 +46,20 @@ public class StudentService {
 	public void deleteStudent(Long studentId) {
 		boolean exists = studentRepository.existsById(studentId);
 		if (!exists) {
-			throw new IllegalStateException("student with id " + studentId + "does not exist");
+			throw new IllegalStateException("student with id " + studentId + " does not exist");
 		}
 		studentRepository.deleteById(studentId);
 	}
 
-	@Transactional // doesn't require JPQL Query
+	@Transactional
 	public void updateStudent(Long studentId, String name, String email, int years, String major) {
 		Student student = studentRepository.findById(studentId)
-				.orElseThrow(() -> new IllegalStateException("student with id " + studentId + "does not exist"));
+				.orElseThrow(() -> new IllegalStateException("student with id " + studentId + " does not exist"));
+
 		if (name != null && name.length() > 0 && !Objects.equals(student.getName(), name)) {
 			student.setName(name);
 		}
+
 		if (email != null && email.length() > 0 && !Objects.equals(student.getEmail(), email)) {
 			Optional<Student> studentOptional = studentRepository.findStudentByEmail(email);
 			if (studentOptional.isPresent()) {
@@ -65,25 +67,28 @@ public class StudentService {
 			}
 			student.setEmail(email);
 		}
+
 		student.setYears(years);
 		student.setMajor(major);
 	}
 
-	public Student getStudents(Long studentId) {
+	public Student getStudent(Long studentId) {  // ✅ Renommé pour éviter confusion
 		return studentRepository.findById(studentId)
-				.orElseThrow(() -> new IllegalStateException("student with id " + studentId + "does not exist"));
+				.orElseThrow(() -> new IllegalStateException("student with id " + studentId + " does not exist"));
 	}
 
+	@Transactional
 	public void enrollStudent(Long studentId, Long courseId) {
-		Student s = studentRepo.findById(studentId).orElseThrow();
-		Course c = courseRepo.findById(courseId).orElseThrow();
+		Student s = studentRepository.findById(studentId)
+				.orElseThrow(() -> new IllegalStateException("Student not found"));
+		Course c = courseRepository.findById(courseId)
+				.orElseThrow(() -> new IllegalStateException("Course not found"));
 
 		Enrollment e = new Enrollment();
 		e.setStudent(s);
 		e.setCourse(c);
 		e.setAcademicYear("2025/2026");
 
-		enrollmentRepo.save(e);
+		enrollmentRepository.save(e);
 	}
-
 }

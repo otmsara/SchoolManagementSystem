@@ -4,61 +4,57 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 @Entity
 @Table
-
+@JsonIgnoreProperties({"enrollments"})  // Évite la récursion infinie
 public class Student {
 
     @Id
     @SequenceGenerator(name = "student_sequence", sequenceName = "student_sequence", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "student_sequence")
     private Long id;
+
     private String name;
     private String email;
     private LocalDate dob;
-    private String Major;
-    private Integer Years;
+
+    @Column(name = "major")  // Correction: minuscule pour respecter les conventions
+    private String major;
+
+    @Column(name = "years")  // Correction: minuscule
+    private Integer years;
+
     @Transient
     private Integer age;
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
     private List<Enrollment> enrollments;
 
-    public List<Enrollment> getEnrollments() { return enrollments; }
-    public void setEnrollments(List<Enrollment> enrollments) { this.enrollments = enrollments; }
-
+    // Constructeurs
     public Student() {
     }
 
-    public Student(Long id,
-            String name,
-            String email,
-            LocalDate dob,
-            String Major,
-            Integer Years) {
+    public Student(Long id, String name, String email, LocalDate dob, String major, Integer years) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.dob = dob;
-        this.Major = Major;
-        this.Years = Years;
+        this.major = major;
+        this.years = years;
     }
 
-    public Student(String name,
-            String email,
-            LocalDate dob,
-            String Major,
-            Integer Years) {
+    public Student(String name, String email, LocalDate dob, String major, Integer years) {
         this.name = name;
         this.email = email;
         this.dob = dob;
-        this.Major = Major;
-        this.Years = Years;
+        this.major = major;
+        this.years = years;
     }
 
-
+    // Getters et Setters
     public Long getId() {
         return this.id;
     }
@@ -76,7 +72,6 @@ public class Student {
     }
 
     public String getEmail() {
-
         return this.email;
     }
 
@@ -92,7 +87,11 @@ public class Student {
         this.dob = dob;
     }
 
+    // ✅ CORRECTION PRINCIPALE : Vérification de null
     public Integer getAge() {
+        if (this.dob == null) {
+            return null;  // ou return 0; si vous préférez
+        }
         return Period.between(this.dob, LocalDate.now()).getYears();
     }
 
@@ -100,32 +99,39 @@ public class Student {
         this.age = age;
     }
 
-    public void setMajor(String Major) {
-        this.Major = Major;
-    }
-
     public String getMajor() {
-        return Major;
+        return major;
     }
 
-    public void setYears(Integer Years) {
-        this.Years = Years;
+    public void setMajor(String major) {
+        this.major = major;
     }
 
     public Integer getYears() {
-        return Years;
+        return years;
+    }
+
+    public void setYears(Integer years) {
+        this.years = years;
+    }
+
+    public List<Enrollment> getEnrollments() {
+        return enrollments;
+    }
+
+    public void setEnrollments(List<Enrollment> enrollments) {
+        this.enrollments = enrollments;
     }
 
     @Override
     public String toString() {
-        return "{\n" +
-                "\n id=" + id +
-                "\n, name=" + name +
-                "\n, email=" + email +
-                "\n, dob=" + dob +
-                "\n, age=" + age +
-                "Major=" + Major +
-                "LengthofDegree" + Years + "Years" + "\n}";
+        return "Student{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", email='" + email + '\'' +
+                ", dob=" + dob +
+                ", major='" + major + '\'' +
+                ", years=" + years +
+                '}';
     }
 }
-

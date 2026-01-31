@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Gestion Cours - Admin</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-book"></i> Gestion des Cours</h1>
+
+    </div>
+
+    <!-- Barre de recherche -->
+    <div class="row mb-3">
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button type="button" class="btn btn-warning text-white" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+                <i class="bi bi-plus-circle"></i> Créer un cours
+            </button>
+        </div>
+        <div class="col-md-12">
+            <input type="text" class="form-control" id="searchCourse"
+                   placeholder="Rechercher un cours par nom ou code...">
+        </div>
+    </div>
+
+    <!-- Liste des cours -->
+    <div class="row" id="coursesContainer">
+        <div class="col-12 text-center">
+            <div class="spinner-border text-warning" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ajouter/Modifier Cours -->
+    <div class="modal fade" id="addCourseModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title" id="modalTitle">Créer un nouveau cours</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="courseForm">
+                        <input type="hidden" id="courseId">
+
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="courseName" class="form-label">Nom du cours *</label>
+                                <input type="text" class="form-control" id="courseName"
+                                       placeholder="ex: Introduction à la Programmation" required>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="courseCode" class="form-label">Code *</label>
+                                <input type="text" class="form-control" id="courseCode"
+                                       placeholder="ex: CS101" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="courseDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="courseDescription" rows="3"
+                                      placeholder="Description du cours..."></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="courseCredits" class="form-label">Crédits</label>
+                                <input type="number" class="form-control" id="courseCredits"
+                                       min="1" max="10" value="3">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="courseSemester" class="form-label">Semestre</label>
+                                <select class="form-select" id="courseSemester">
+                                    <option value="1">Semestre 1</option>
+                                    <option value="2">Semestre 2</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="courseCapacity" class="form-label">Capacité</label>
+                                <input type="number" class="form-control" id="courseCapacity"
+                                       min="1" value="30">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="courseTeacher" class="form-label">Enseignant assigné</label>
+                            <select class="form-select" id="courseTeacher">
+                                <option value="">Aucun (à assigner plus tard)</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-warning text-white" onclick="saveCourse()">
+                        Enregistrer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Assigner Enseignant -->
+    <div class="modal fade" id="assignTeacherModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assigner un enseignant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="assignCourseId">
+                    <div class="mb-3">
+                        <label for="assignTeacherId" class="form-label">Sélectionner un enseignant</label>
+                        <select class="form-select" id="assignTeacherId" required>
+                            <option value="">Choisir...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmAssignTeacher()">
+                        Assigner
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let courses = [];
+        let teachers = [];
+
+        // Charger les cours et enseignants
+        function loadData() {
+            Promise.all([
+                fetch('/api/courses').then(r => r.json()),
+                fetch('/api/v1/teacher').then(r => r.json())
+            ])
+            .then(([coursesData, teachersData]) => {
+                courses = coursesData;
+                teachers = teachersData;
+                displayCourses(courses);
+                populateTeacherSelects();
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                document.getElementById('coursesContainer').innerHTML =
+                    '<div class="col-12"><div class="alert alert-danger">Erreur de chargement</div></div>';
+            });
+        }
+
+        // Afficher les cours
+        function displayCourses(data) {
+            const container = document.getElementById('coursesContainer');
+            if (data.length === 0) {
+                container.innerHTML = '<div class="col-12"><p class="text-center text-muted">Aucun cours disponible</p></div>';
+                return;
+            }
+
+            container.innerHTML = data.map(course => `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-warning text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-book"></i> ${course.name}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">
+                                <strong>Code:</strong> <span class="badge bg-secondary">${course.code || 'N/A'}</span><br>
+                                <strong>Crédits:</strong> ${course.credits || 'N/A'}<br>
+                                <strong>Enseignant:</strong>
+                                ${course.teacher ?
+                                    `<span class="text-success"><i class="bi bi-person-check"></i> ${course.teacher.name}</span>` :
+                                    `<span class="text-muted">Non assigné</span>`
+                                }
+                            </p>
+                            <p class="card-text small text-muted">
+                                ${course.description || 'Pas de description'}
+                            </p>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="btn-group w-100" role="group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editCourse(${course.id})"
+                                        title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="showAssignTeacher(${course.id})"
+                                        title="Assigner enseignant">
+                                    <i class="bi bi-person-plus"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCourse(${course.id})"
+                                        title="Supprimer">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Peupler les sélecteurs d'enseignants
+        function populateTeacherSelects() {
+            const selects = ['courseTeacher', 'assignTeacherId'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                const currentOptions = select.innerHTML;
+                select.innerHTML = currentOptions + teachers.map(t =>
+                    `<option value="${t.id}">${t.name} (${t.faculty})</option>`
+                ).join('');
+            });
+        }
+
+        // Enregistrer un cours
+        function saveCourse() {
+            const id = document.getElementById('courseId').value;
+            const course = {
+                name: document.getElementById('courseName').value,
+                code: document.getElementById('courseCode').value,
+                description: document.getElementById('courseDescription').value,
+                credits: parseInt(document.getElementById('courseCredits').value),
+                semester: parseInt(document.getElementById('courseSemester').value),
+                capacity: parseInt(document.getElementById('courseCapacity').value)
+            };
+
+            const teacherId = document.getElementById('courseTeacher').value;
+
+            fetch('/api/courses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(course)
+            })
+            .then(response => response.json())
+            .then(savedCourse => {
+                if (teacherId) {
+                    return fetch(`/api/courses/${savedCourse.id}/teacher/${teacherId}`, {
+                        method: 'PUT'
+                    });
+                }
+                return Promise.resolve();
+            })
+            .then(() => {
+                bootstrap.Modal.getInstance(document.getElementById('addCourseModal')).hide();
+                loadData();
+                document.getElementById('courseForm').reset();
+            })
+            .catch(error => console.error('Erreur:', error));
+        }
+
+        // Modifier un cours
+        function editCourse(id) {
+            const course = courses.find(c => c.id === id);
+            if (course) {
+                document.getElementById('courseId').value = course.id;
+                document.getElementById('courseName').value = course.name;
+                document.getElementById('courseCode').value = course.code || '';
+                document.getElementById('courseDescription').value = course.description || '';
+                document.getElementById('courseCredits').value = course.credits || 3;
+                document.getElementById('courseSemester').value = course.semester || 1;
+                document.getElementById('courseCapacity').value = course.capacity || 30;
+                document.getElementById('courseTeacher').value = course.teacher?.id || '';
+                document.getElementById('modalTitle').textContent = 'Modifier le cours';
+                new bootstrap.Modal(document.getElementById('addCourseModal')).show();
+            }
+        }
+
+        // Supprimer un cours
+        function deleteCourse(id) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce cours ?')) {
+                fetch(`/api/courses/${id}`, { method: 'DELETE' })
+                    .then(() => loadData())
+                    .catch(error => console.error('Erreur:', error));
+            }
+        }
+
+        // Afficher modal d'assignation
+        function showAssignTeacher(courseId) {
+            document.getElementById('assignCourseId').value = courseId;
+            new bootstrap.Modal(document.getElementById('assignTeacherModal')).show();
+        }
+
+        // Confirmer assignation
+        function confirmAssignTeacher() {
+            const courseId = document.getElementById('assignCourseId').value;
+            const teacherId = document.getElementById('assignTeacherId').value;
+
+            if (!teacherId) {
+                alert('Veuillez sélectionner un enseignant');
+                return;
+            }
+
+            fetch(`/api/courses/${courseId}/teacher/${teacherId}`, {
+                method: 'PUT'
+            })
+            .then(response => {
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('assignTeacherModal')).hide();
+                    loadData();
+                }
+            })
+            .catch(error => console.error('Erreur:', error));
+        }
+
+        // Recherche
+        document.getElementById('searchCourse').addEventListener('input', function(e) {
+            const search = e.target.value.toLowerCase();
+            const filtered = courses.filter(c =>
+                c.name.toLowerCase().includes(search) ||
+                (c.code && c.code.toLowerCase().includes(search))
+            );
+            displayCourses(filtered);
+        });
+
+        // Charger au démarrage
+        document.addEventListener('DOMContentLoaded', loadData);
+
+        // Réinitialiser le formulaire
+        document.getElementById('addCourseModal').addEventListener('hidden.bs.modal', function () {
+            document.getElementById('courseForm').reset();
+            document.getElementById('courseId').value = '';
+            document.getElementById('modalTitle').textContent = 'Créer un nouveau cours';
+        });
+    </script>
+</div>
+</body>
+</html>

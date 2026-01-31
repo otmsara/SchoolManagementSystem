@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>S'inscrire - Étudiant</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-clipboard-plus"></i> S'inscrire à un Cours</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="/student/my-courses" class="btn btn-outline-secondary">
+                <i class="bi bi-book"></i> Mes cours
+            </a>
+        </div>
+    </div>
+
+    <!-- Informations -->
+    <div class="alert alert-info mb-4">
+        <i class="bi bi-info-circle"></i>
+        <strong>Année académique 2025/2026</strong> - Parcourez les cours disponibles et inscrivez-vous en un clic.
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <input type="text" class="form-control" id="searchCourse"
+                   placeholder="Rechercher un cours...">
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="filterSemester">
+                <option value="">Tous les semestres</option>
+                <option value="1">Semestre 1</option>
+                <option value="2">Semestre 2</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filterCredits">
+                <option value="">Tous les crédits</option>
+                <option value="1">1-2 crédits</option>
+                <option value="3">3 crédits</option>
+                <option value="4">4+ crédits</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filterAvailability">
+                <option value="">Tous</option>
+                <option value="available">Places disponibles</option>
+                <option value="enrolled">Déjà inscrit</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Cours disponibles</h6>
+                    <h3 class="text-primary" id="availableCount">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Déjà inscrit</h6>
+                    <h3 class="text-success" id="enrolledCount">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Places limitées</h6>
+                    <h3 class="text-warning" id="limitedCount">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Complets</h6>
+                    <h3 class="text-danger" id="fullCount">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des cours -->
+    <div class="row" id="coursesContainer">
+        <div class="col-12 text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmation d'inscription -->
+    <div class="modal fade" id="enrollConfirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Confirmer l'inscription</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="enrollConfirmBody">
+                    <!-- Contenu chargé dynamiquement -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-success" id="confirmEnrollBtn">
+                        <i class="bi bi-check-circle"></i> Confirmer l'inscription
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const currentStudentId = 1; // TODO: ID réel de l'étudiant connecté
+        let allCourses = [];
+        let myEnrollments = [];
+        let enrolledCourseIds = [];
+
+        // Charger les cours disponibles
+        function loadAvailableCourses() {
+            Promise.all([
+                fetch('/api/courses').then(r => r.json()),
+                fetch('/api/courses/enrollments').then(r => r.json())
+            ])
+            .then(([courses, enrollments]) => {
+                allCourses = courses;
+                myEnrollments = enrollments.filter(e => e.student?.id === currentStudentId);
+                enrolledCourseIds = myEnrollments.map(e => e.course?.id);
+
+                displayCourses(allCourses);
+                updateStats();
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                document.getElementById('coursesContainer').innerHTML =
+                    '<div class="col-12"><div class="alert alert-danger">Erreur de chargement</div></div>';
+            });
+        }
+
+        // Afficher les cours
+        function displayCourses(courses) {
+            const container = document.getElementById('coursesContainer');
+
+            if (courses.length === 0) {
+                container.innerHTML =
+                    '<div class="col-12"><p class="text-center text-muted">Aucun cours trouvé</p></div>';
+                return;
+            }
+
+            container.innerHTML = courses.map(course => {
+                const isEnrolled = enrolledCourseIds.includes(course.id);
+                const enrollmentCount = myEnrollments.filter(e => e.course?.id === course.id).length;
+                const capacity = course.capacity || 30;
+                const availableSpots = capacity - enrollmentCount;
+                const percentageFull = (enrollmentCount / capacity) * 100;
+
+                let statusBadge = '';
+                let statusClass = '';
+                let buttonHtml = '';
+
+                if (isEnrolled) {
+                    statusBadge = '<span class="badge bg-success">Inscrit</span>';
+                    statusClass = 'border-success';
+                    buttonHtml = '<button class="btn btn-success w-100" disabled><i class="bi bi-check-circle"></i> Déjà inscrit</button>';
+                } else if (availableSpots <= 0) {
+                    statusBadge = '<span class="badge bg-danger">Complet</span>';
+                    statusClass = 'border-danger';
+                    buttonHtml = '<button class="btn btn-danger w-100" disabled><i class="bi bi-x-circle"></i> Complet</button>';
+                } else if (availableSpots <= 5) {
+                    statusBadge = '<span class="badge bg-warning text-dark">Places limitées</span>';
+                    statusClass = 'border-warning';
+                    buttonHtml = `<button class="btn btn-warning text-white w-100" onclick="showEnrollConfirm(${course.id})"><i class="bi bi-plus-circle"></i> S'inscrire</button>`;
+                } else {
+                    statusBadge = '<span class="badge bg-primary">Disponible</span>';
+                    statusClass = 'border-primary';
+                    buttonHtml = `<button class="btn btn-primary w-100" onclick="showEnrollConfirm(${course.id})"><i class="bi bi-plus-circle"></i> S'inscrire</button>`;
+                }
+
+                return `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm ${statusClass}">
+                            <div class="card-header d-flex justify-content-between align-items-start">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-book"></i> ${course.name}
+                                </h5>
+                                ${statusBadge}
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <span class="badge bg-secondary">${course.code || 'N/A'}</span>
+                                    <span class="badge bg-info">${course.credits || 3} crédits</span>
+                                    <span class="badge bg-dark">S${course.semester || 1}</span>
+                                </div>
+
+                                <p class="card-text small text-muted mb-3">
+                                    ${course.description || 'Pas de description disponible'}
+                                </p>
+
+                                ${course.teacher ? `
+                                    <p class="mb-2 small">
+                                        <i class="bi bi-person-badge text-success"></i>
+                                        <strong>${course.teacher.name}</strong><br>
+                                        <small class="text-muted">${course.teacher.faculty}</small>
+                                    </p>
+                                ` : '<p class="text-muted small">Enseignant non assigné</p>'}
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small class="text-muted">Places disponibles</small>
+                                        <small><strong>${availableSpots} / ${capacity}</strong></small>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar ${percentageFull >= 90 ? 'bg-danger' : percentageFull >= 70 ? 'bg-warning' : 'bg-success'}"
+                                             style="width: ${percentageFull}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                ${buttonHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Afficher la confirmation d'inscription
+        function showEnrollConfirm(courseId) {
+            const course = allCourses.find(c => c.id === courseId);
+            if (!course) return;
+
+            document.getElementById('enrollConfirmBody').innerHTML = `
+                <p>Êtes-vous sûr de vouloir vous inscrire au cours suivant ?</p>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">${course.name}</h5>
+                        <p class="card-text">
+                            <span class="badge bg-secondary">${course.code || 'N/A'}</span>
+                            <span class="badge bg-info">${course.credits || 3} crédits</span>
+                            <span class="badge bg-dark">Semestre ${course.semester || 1}</span>
+                        </p>
+                        ${course.teacher ? `
+                            <p class="mb-0">
+                                <strong>Enseignant:</strong> ${course.teacher.name}
+                            </p>
+                        ` : ''}
+                        <p class="mb-0">
+                            <strong>Année académique:</strong> 2025/2026
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            const modal = new bootstrap.Modal(document.getElementById('enrollConfirmModal'));
+            modal.show();
+
+            document.getElementById('confirmEnrollBtn').onclick = () => enrollInCourse(courseId, modal);
+        }
+
+        // Inscrire à un cours
+        function enrollInCourse(courseId, modal) {
+            const btn = document.getElementById('confirmEnrollBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Inscription...';
+
+            fetch(`/api/courses/enroll/${currentStudentId}/${courseId}?academicYear=2025/2026`, {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) {
+                    modal.hide();
+
+                    // Afficher message de succès
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-success alert-dismissible fade show';
+                    alert.innerHTML = `
+                        <i class="bi bi-check-circle"></i>
+                        <strong>Inscription réussie!</strong> Vous êtes maintenant inscrit à ce cours.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    document.querySelector('main > div').insertBefore(alert, document.querySelector('.alert-info'));
+
+                    // Recharger les cours
+                    loadAvailableCourses();
+
+                    // Auto-dismiss après 5 secondes
+                    setTimeout(() => alert.remove(), 5000);
+                } else {
+                    throw new Error('Erreur lors de l\'inscription');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Erreur lors de l\'inscription. Veuillez réessayer.');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle"></i> Confirmer l\'inscription';
+            });
+        }
+
+        // Mettre à jour les statistiques
+        function updateStats() {
+            const available = allCourses.filter(c => !enrolledCourseIds.includes(c.id)).length;
+            const limited = allCourses.filter(c => {
+                const capacity = c.capacity || 30;
+                const enrolled = myEnrollments.filter(e => e.course?.id === c.id).length;
+                return capacity - enrolled <= 5 && capacity - enrolled > 0;
+            }).length;
+            const full = allCourses.filter(c => {
+                const capacity = c.capacity || 30;
+                const enrolled = myEnrollments.filter(e => e.course?.id === c.id).length;
+                return capacity - enrolled <= 0;
+            }).length;
+
+            document.getElementById('availableCount').textContent = available;
+            document.getElementById('enrolledCount').textContent = myEnrollments.length;
+            document.getElementById('limitedCount').textContent = limited;
+            document.getElementById('fullCount').textContent = full;
+        }
+
+        // Recherche
+        document.getElementById('searchCourse').addEventListener('input', function(e) {
+            const search = e.target.value.toLowerCase();
+            const filtered = allCourses.filter(c =>
+                c.name.toLowerCase().includes(search) ||
+                (c.code && c.code.toLowerCase().includes(search))
+            );
+            displayCourses(filtered);
+        });
+
+        // Filtre par semestre
+        document.getElementById('filterSemester').addEventListener('change', function(e) {
+            applyFilters();
+        });
+
+        // Filtre par crédits
+        document.getElementById('filterCredits').addEventListener('change', function(e) {
+            applyFilters();
+        });
+
+        // Filtre par disponibilité
+        document.getElementById('filterAvailability').addEventListener('change', function(e) {
+            applyFilters();
+        });
+
+        // Appliquer tous les filtres
+        function applyFilters() {
+            let filtered = allCourses;
+
+            const semester = parseInt(document.getElementById('filterSemester').value);
+            if (semester) {
+                filtered = filtered.filter(c => c.semester === semester);
+            }
+
+            const credits = document.getElementById('filterCredits').value;
+            if (credits === '1') filtered = filtered.filter(c => (c.credits || 3) <= 2);
+            else if (credits === '3') filtered = filtered.filter(c => (c.credits || 3) === 3);
+            else if (credits === '4') filtered = filtered.filter(c => (c.credits || 3) >= 4);
+
+            const availability = document.getElementById('filterAvailability').value;
+            if (availability === 'available') {
+                filtered = filtered.filter(c => !enrolledCourseIds.includes(c.id));
+            } else if (availability === 'enrolled') {
+                filtered = filtered.filter(c => enrolledCourseIds.includes(c.id));
+            }
+
+            displayCourses(filtered);
+        }
+
+        // Charger au démarrage
+        document.addEventListener('DOMContentLoaded', loadAvailableCourses);
+    </script>
+</div>
+</body>
+</html>

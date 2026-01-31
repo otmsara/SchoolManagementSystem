@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Gestion Étudiants - Admin</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-people"></i> Gestion des Étudiants</h1>
+
+    </div>
+
+    <!-- Barre de recherche et filtres -->
+    <div class="row mb-3">
+
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                <i class="bi bi-person-plus"></i> Ajouter un étudiant
+            </button>
+        </div>
+
+        <div class="col-md-6">
+            <input type="text" class="form-control" id="searchStudent" placeholder="Rechercher par nom ou email...">
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filterYear">
+                <option value="">Toutes les années</option>
+                <option value="1">Année 1</option>
+                <option value="2">Année 2</option>
+                <option value="3">Année 3</option>
+                <option value="4">Année 4</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filterMajor">
+                <option value="">Toutes les filières</option>
+                <option value="Informatique">Informatique</option>
+                <option value="Mathématiques">Mathématiques</option>
+                <option value="Physique">Physique</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Tableau des étudiants -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom</th>
+                        <th>Email</th>
+                        <th>Année</th>
+                        <th>Filière</th>
+                        <th>Date d'inscription</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="studentsTableBody">
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ajouter/Modifier Étudiant -->
+    <div class="modal fade" id="addStudentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Ajouter un étudiant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="studentForm">
+                        <input type="hidden" id="studentId">
+
+                        <div class="mb-3">
+                            <label for="studentName" class="form-label">Nom complet *</label>
+                            <input type="text" class="form-control" id="studentName" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="studentEmail" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="studentEmail" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="studentYears" class="form-label">Année *</label>
+                            <select class="form-select" id="studentYears" required>
+                                <option value="">Sélectionner...</option>
+                                <option value="1">1ère année</option>
+                                <option value="2">2ème année</option>
+                                <option value="3">3ème année</option>
+                                <option value="4">4ème année</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="studentMajor" class="form-label">Filière *</label>
+                            <input type="text" class="form-control" id="studentMajor"
+                                   placeholder="ex: Informatique" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" onclick="saveStudent()">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let students = [];
+
+        // Charger les étudiants
+        function loadStudents() {
+            fetch('/api/v1/student')
+                .then(response => response.json())
+                .then(data => {
+                    students = data;
+                    displayStudents(students);
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    document.getElementById('studentsTableBody').innerHTML =
+                        '<tr><td colspan="7" class="text-center text-danger">Erreur de chargement</td></tr>';
+                });
+        }
+
+        // Afficher les étudiants
+        function displayStudents(data) {
+            const tbody = document.getElementById('studentsTableBody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Aucun étudiant trouvé</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(student => `
+                <tr>
+                    <td>${student.id}</td>
+                    <td><i class="bi bi-person-circle"></i> ${student.name}</td>
+                    <td>${student.email}</td>
+                    <td><span class="badge bg-info">${student.years}ème année</span></td>
+                    <td>${student.major}</td>
+                    <td>${new Date().toLocaleDateString('fr-FR')}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editStudent(${student.id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteStudent(${student.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Enregistrer un étudiant
+        function saveStudent() {
+            const id = document.getElementById('studentId').value;
+            const student = {
+                name: document.getElementById('studentName').value,
+                email: document.getElementById('studentEmail').value,
+                years: parseInt(document.getElementById('studentYears').value),
+                major: document.getElementById('studentMajor').value
+            };
+
+            const url = id ? `/api/v1/student/${id}` : '/api/v1/student';
+            const method = id ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(student)
+            })
+            .then(response => {
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('addStudentModal')).hide();
+                    loadStudents();
+                    document.getElementById('studentForm').reset();
+                }
+            })
+            .catch(error => console.error('Erreur:', error));
+        }
+
+        // Modifier un étudiant
+        function editStudent(id) {
+            const student = students.find(s => s.id === id);
+            if (student) {
+                document.getElementById('studentId').value = student.id;
+                document.getElementById('studentName').value = student.name;
+                document.getElementById('studentEmail').value = student.email;
+                document.getElementById('studentYears').value = student.years;
+                document.getElementById('studentMajor').value = student.major;
+                document.getElementById('modalTitle').textContent = 'Modifier l\'étudiant';
+                new bootstrap.Modal(document.getElementById('addStudentModal')).show();
+            }
+        }
+
+        // Supprimer un étudiant
+        function deleteStudent(id) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
+                fetch(`/api/v1/student/${id}`, { method: 'DELETE' })
+                    .then(response => {
+                        if (response.ok) loadStudents();
+                    })
+                    .catch(error => console.error('Erreur:', error));
+            }
+        }
+
+        // Recherche
+        document.getElementById('searchStudent').addEventListener('input', function(e) {
+            const search = e.target.value.toLowerCase();
+            const filtered = students.filter(s =>
+                s.name.toLowerCase().includes(search) ||
+                s.email.toLowerCase().includes(search)
+            );
+            displayStudents(filtered);
+        });
+
+        // Charger au démarrage
+        document.addEventListener('DOMContentLoaded', loadStudents);
+
+        // Réinitialiser le formulaire à la fermeture du modal
+        document.getElementById('addStudentModal').addEventListener('hidden.bs.modal', function () {
+            document.getElementById('studentForm').reset();
+            document.getElementById('studentId').value = '';
+            document.getElementById('modalTitle').textContent = 'Ajouter un étudiant';
+        });
+    </script>
+</div>
+</body>
+</html>

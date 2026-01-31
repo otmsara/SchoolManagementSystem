@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Dashboard Étudiant</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-person-circle"></i> Mon Dashboard</h1>
+
+    </div>
+
+    <!-- Profil étudiant -->
+    <div class="row mb-4">
+        <div class="btn-toolbar mb-2 mb-md-0">
+                <span class="badge bg-primary fs-6">
+                    <i class="bi bi-calendar-check"></i> Année 2025/2026
+                </span>
+        </div>
+        <div class="col-md-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-badge"></i> Mon Profil</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2 text-center">
+                            <i class="bi bi-person-circle" style="font-size: 5rem; color: #0d6efd;"></i>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-camera"></i> Modifier photo
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="text-muted small">Nom complet</label>
+                                    <p class="mb-0 fw-bold" id="studentName">Chargement...</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="text-muted small">Email</label>
+                                    <p class="mb-0" id="studentEmail">Chargement...</p>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="text-muted small">Année d'études</label>
+                                    <p class="mb-0" id="studentYear">
+                                        <span class="badge bg-info">-</span>
+                                    </p>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="text-muted small">Filière</label>
+                                    <p class="mb-0" id="studentMajor">-</p>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="text-muted small">Numéro étudiant</label>
+                                    <p class="mb-0" id="studentId">-</p>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <a href="/profile" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i> Modifier mon profil
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Cours inscrits</h6>
+                            <h2 class="mb-0" id="enrolledCoursesCount">0</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-book-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <a href="/student/my-courses" class="text-white text-decoration-none">
+                        <small>Voir mes cours <i class="bi bi-arrow-right"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Crédits totaux</h6>
+                            <h2 class="mb-0" id="totalCredits">0</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-award-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <small>Année en cours</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Cours disponibles</h6>
+                            <h2 class="mb-0" id="availableCoursesCount">0</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-collection-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                    <a href="/student/enroll" class="text-white text-decoration-none">
+                        <small>S'inscrire <i class="bi bi-arrow-right"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mes cours -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-book"></i> Mes Cours Actuels</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="myCoursesContainer">
+                        <div class="col-12 text-center">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning-fill"></i> Actions Rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="/student/enroll" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-plus-circle"></i> S'inscrire à un cours
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="/student/my-courses" class="btn btn-outline-success w-100">
+                                <i class="bi bi-book"></i> Voir mes cours
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="/profile" class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-person"></i> Mon profil
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="/settings" class="btn btn-outline-dark w-100">
+                                <i class="bi bi-gear"></i> Paramètres
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const currentStudentId = 1; // TODO: ID réel de l'étudiant connecté
+        let student = null;
+        let enrollments = [];
+        let allCourses = [];
+
+        // Charger les données de l'étudiant
+        function loadStudentData() {
+            Promise.all([
+                fetch('/api/v1/student').then(r => r.json()),
+                fetch('/api/courses/enrollments').then(r => r.json()),
+                fetch('/api/courses').then(r => r.json())
+            ])
+            .then(([students, enrollmentsData, coursesData]) => {
+                student = students.find(s => s.id === currentStudentId) || students[0];
+                enrollments = enrollmentsData.filter(e => e.student?.id === currentStudentId);
+                allCourses = coursesData;
+
+                displayStudentInfo();
+                displayMyCourses();
+                updateStats();
+            })
+            .catch(error => console.error('Erreur:', error));
+        }
+
+        // Afficher les informations de l'étudiant
+        function displayStudentInfo() {
+            if (!student) return;
+
+            document.getElementById('studentName').textContent = student.name;
+            document.getElementById('studentEmail').textContent = student.email;
+            document.getElementById('studentYear').innerHTML =
+                `<span class="badge bg-info">${student.years}ème année</span>`;
+            document.getElementById('studentMajor').textContent = student.major;
+            document.getElementById('studentId').textContent = `#${student.id}`;
+        }
+
+        // Afficher les cours de l'étudiant
+        function displayMyCourses() {
+            const container = document.getElementById('myCoursesContainer');
+
+            if (enrollments.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            Vous n'êtes inscrit à aucun cours.
+                            <a href="/student/enroll" class="alert-link">Inscrivez-vous maintenant!</a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = enrollments.map(enrollment => {
+                const course = enrollment.course;
+                if (!course) return '';
+
+                return `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card border-success h-100">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-book"></i> ${course.name}
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-2">
+                                    <span class="badge bg-secondary">${course.code || 'N/A'}</span>
+                                    <span class="badge bg-warning text-dark">${course.credits || 3} crédits</span>
+                                </p>
+                                <p class="small text-muted mb-2">
+                                    ${course.description || 'Pas de description'}
+                                </p>
+                                ${course.teacher ? `
+                                    <p class="mb-0 small">
+                                        <i class="bi bi-person-badge text-success"></i>
+                                        <strong>Enseignant:</strong> ${course.teacher.name}
+                                    </p>
+                                ` : ''}
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar-check"></i>
+                                    Inscrit le ${enrollment.enrollmentDate || new Date().toLocaleDateString('fr-FR')}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Mettre à jour les statistiques
+        function updateStats() {
+            document.getElementById('enrolledCoursesCount').textContent = enrollments.length;
+
+            const credits = enrollments.reduce((sum, e) => sum + (e.course?.credits || 3), 0);
+            document.getElementById('totalCredits').textContent = credits;
+
+            const enrolledCourseIds = enrollments.map(e => e.course?.id);
+            const available = allCourses.filter(c => !enrolledCourseIds.includes(c.id)).length;
+            document.getElementById('availableCoursesCount').textContent = available;
+        }
+
+        // Charger au démarrage
+        document.addEventListener('DOMContentLoaded', loadStudentData);
+    </script>
+</div>
+</body>
+</html>
